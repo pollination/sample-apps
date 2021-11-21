@@ -1,0 +1,4 @@
+pollination-streamlit>=0.1.1
+streamlit-vtkjs
+honeybee-vtk>=0.30.5
+ladybug-pandas>=0.4.0
