@@ -29,7 +29,7 @@ You can get started by developing on top of these apps. Until we provide an offi
 | [Daylight Factor App](./daylight-factor-app/app.py) | Creates a simple room and run daylight factor simulation on Pollination. | [Link](https://streamlit-experiment-daylight-factor-app-bctgvz4o3a-uc.a.run.app/) |
 | [Design Explorer](./design-explorer/app.py) | A prototype for building apps with parallel coordinates to do comparative studies. This app uses HiPlot. | [Link](https://streamlit-experiment-design-explorer-bctgvz4o3a-uc.a.run.app/) |
 | [Energy Simulation Report](./energy-simulation-report/app.py) | An example of loading HTML outputs. | [Link](https://streamlit-experiment-energy-simulation-report-bctgvz4o3a-uc.a.run.app/) |
-| [Energy Use App](./energy-use/app.py) | An example for reading the results of an annual energy use sqlite file. | - |
+| [Energy Use App](./energy-use/app.py) | An example for reading the results of an annual energy use sqlite file. | [Link](https://streamlit-experiment-energy-use-bctgvz4o3a-uc.a.run.app/) |
 | [EPW Visualization](./epw-viz/app.py) | An example for using Ladybug Python libraries. This app doesn't have dependencies on Pollination. | [Link](https://streamlit-experiment-epw-viz-bctgvz4o3a-uc.a.run.app/) |
 | [LEED Option II](./leed-option-ii/app.py) | Visualize the outputs of the LEED Option II recipe in a report-like app. | [Link](https://streamlit-experiment-leed-option-ii-bctgvz4o3a-uc.a.run.app/) |
 
