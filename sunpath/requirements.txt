@@ -1,0 +1,2 @@
+streamlit_vtkjs
+ladybug-vtk>=0.5.0
