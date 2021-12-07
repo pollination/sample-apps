@@ -3,11 +3,11 @@ import pathlib
 import streamlit as st
 import pandas as pd
 import numpy as np
-
+from streamlit_vtkjs import st_vtkjs
 from ladybug.epw import EPW
 from ladybug_pandas import DataFrame
 
-from sunpath import st_sunpath
+from ladybug.sunpath import Sunpath
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -15,6 +15,7 @@ st.set_page_config(
 )
 
 st.title('Sample Weather Data Visualization App!')
+
 
 def main():
     # split the first container into 2
@@ -67,7 +68,15 @@ def main():
 
     with col2:
         # add sunpath
-        st_sunpath(epw.location)
+        folder = pathlib.Path('./data')
+        folder.mkdir(parents=True, exist_ok=True)
+        sp = Sunpath.from_location(epw_loc)
+        sp_file = sp.to_vtkjs(folder.as_posix(),
+                              data=[epw.diffuse_horizontal_radiation,
+                              epw.direct_normal_radiation, epw.dry_bulb_temperature])
+        menu = st.sidebar.checkbox('Show viewer controls', value=False)
+        # update the viewer
+        st_vtkjs(sp_file.read_bytes(), menu=menu, key='viewer')
 
     # add average monthly data
     st.header('Temperature')
@@ -91,6 +100,7 @@ def main():
         ]
     )
     st.area_chart(rad_df)
+
 
 if __name__ == '__main__':
     main()
