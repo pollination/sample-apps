@@ -7,7 +7,7 @@ import streamlit as st
 from pollination_streamlit.selectors import job_selector
 from streamlit_vtkjs import st_vtkjs
 
-from load_model import get_model_with_results
+from honeybee_vtk.model import HBModel, Model, SensorGridOptions, DisplayMode
 from vtk_config import daylight_factor_config
 
 st.set_page_config(
@@ -65,9 +65,10 @@ def download_artifacts(job):
             cfg_file = daylight_factor_config(results_path, output_folder)
             # load model and results and save them as a vtkjs file
             model_dict = json.load(job.download_artifact(row.model))
-            get_model_with_results(
-                model_dict, viz_file, cfg_file, display_mode='wireframe'
-            )
+            hb_model = HBModel.from_dict(model_dict)
+            model = Model(hb_model, SensorGridOptions.Sensors)
+            model.to_vtkjs(folder=viz_file.parent, config=cfg_file,
+                           display_mode=DisplayMode.Wireframe)
 
     progress_bar.empty()
 
