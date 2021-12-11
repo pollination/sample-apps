@@ -8,11 +8,7 @@ import hiplot
 import numpy as np
 import pandas as pd
 import streamlit as st
-from honeybee_vtk.actor import Actor
-from honeybee_vtk.camera import Camera
-from honeybee_vtk.config import load_config
 from honeybee_vtk.model import HBModel, Model
-from honeybee_vtk.scene import Scene
 from honeybee_vtk.vtkjs.schema import DisplayMode, SensorGridOptions
 from pollination_streamlit.interactors import Job, Run
 from pollination_streamlit.selectors import job_selector
@@ -74,22 +70,10 @@ def download_model(dataframe: pd.DataFrame, run_number: str) -> pathlib.Path:
 
     data_folder = pathlib.Path('data', job.id, run_id)
     config_file = data_folder.joinpath('config.json')
-    if config_file.is_file():
-        scene = Scene()
-        actors = Actor.from_model(vtk_model)
-        bounds = Actor.get_bounds(actors)
-        centroid = Actor.get_centroid(actors)
-        cameras = Camera.aerial_cameras(bounds=bounds, centroid=centroid)
-        scene.add_actors(actors)
-        scene.add_cameras(cameras)
-        vtk_model = load_config(config_file.as_posix(), vtk_model, scene)
-
-    # create a folder based on job id and resuse the geometry
-    vtk_file = data_folder.joinpath('model.vtkjs')
-    data_folder.mkdir(parents=True, exist_ok=True)
-    vtk_model.to_vtkjs(data_folder.as_posix(), 'model')
-
-    return vtk_file
+    vtk_model.to_vtkjs(folder=data_folder.as_posix(), name='model',
+                       config=config_file.as_posix(),
+                       display_mode=DisplayMode.Wireframe)
+    return data_folder.joinpath('model.vtkjs')
 
 
 @st.cache
@@ -188,6 +172,7 @@ def check_recipe(recipe: Dict) -> List[str]:
 
     return name, output
 
+
 # TODO: Figure out why the interactive design didn't work
 # show_pc = st.sidebar.checkbox('Show parallel coordinates chart', value=True)
 show_3d = st.sidebar.checkbox('Show 3D model grid')
@@ -208,9 +193,9 @@ if job is not None:
             'more information.'
         )
         st.stop()
-    
+
     with st.spinner('Downloading file...'):
-            download_results(job.runs, output)
+        download_results(job.runs, output)
 
     if recipe_name == 'daylight-factor':
         res_df = calculate_averag_daylight_factors(job.id)
