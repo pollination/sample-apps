@@ -77,7 +77,7 @@ def download_results(job: Job) -> pathlib.Path:
             model_dict = json.load(job.download_artifact(row.model))
             hb_model = HBModel.from_dict(model_dict)
             model = Model(hb_model)
-            model.to_vtkjs(run_folder, 'model')
+            model.to_vtkjs(folder=run_folder, name='model')
         except HTTPError:
             st.warning(
                 'Some of the runs of the job have failed.\n'
