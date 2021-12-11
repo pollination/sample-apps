@@ -8,11 +8,8 @@ import streamlit as st
 from honeybee.model import Model, Room
 from honeybee_radiance.properties.model import ModelRadianceProperties
 from honeybee_radiance.sensorgrid import SensorGrid
-from honeybee_vtk.actor import Actor
-from honeybee_vtk.camera import Camera
 from honeybee_vtk.model import DisplayMode
 from honeybee_vtk.model import Model as VTKModel
-from honeybee_vtk.scene import Scene
 from honeybee_vtk.vtkjs.schema import SensorGridOptions
 from queenbee.job.job import JobStatusEnum
 from streamlit_autorefresh import st_autorefresh
