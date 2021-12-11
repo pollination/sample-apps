@@ -10,7 +10,7 @@ from pollination_streamlit.selectors import run_selector
 
 from streamlit_vtkjs import st_vtkjs
 
-from load_model import get_model_with_results
+from honeybee_vtk.model import HBModel, Model, SensorGridOptions, DisplayMode
 from vtk_config import leed_config
 
 
@@ -42,6 +42,7 @@ def download_folder(run, output_name, folder):
     with zipfile.ZipFile(results_zip) as zip_folder:
         zip_folder.extractall(folder.as_posix())
 
+
 @st.cache(show_spinner=False)
 def download_files(run):
 
@@ -69,15 +70,18 @@ def download_files(run):
     viz_file = results_folder.joinpath('model.vtkjs')
     cfg_file = leed_config(results_folder)
     model_dict = json.load(job.download_artifact(info.model))
-    get_model_with_results(
-        model_dict, viz_file, cfg_file, display_mode='wireframe'
-    )
-
+    hb_model = HBModel.from_dict(model_dict)
+    model = Model(hb_model, SensorGridOptions.Sensors)
+    model.to_vtkjs(folder=viz_file.parent, name=viz_file.stem,
+                   config=cfg_file, display_mode=DisplayMode.Wireframe)
+    # get_model_with_results(
+    #     model_dict, viz_file, cfg_file, display_mode='wireframe'
+    # )
     return viz_file, credits, space_summary
 
 
-## get the run id
-_, run_url, _ =  st.columns([0.5, 3.5, 0.5])
+# get the run id
+_, run_url, _ = st.columns([0.5, 3.5, 0.5])
 with run_url:
     st.header(
         'LEED Option II report'
@@ -89,7 +93,7 @@ with run_url:
         help='See the factsheet about the results of the LEED Option II simulation.'
     )
 
-## download related results
+# download related results
 if run is not None:
     try:
         with st.spinner('Downloading file...'):
@@ -151,7 +155,7 @@ if run is not None:
 
     # this is not good practice for creating the layout
     # but good enough for now
-    _, table_column, _ =  st.columns([0.5, 3.5, 0.5])
+    _, table_column, _ = st.columns([0.5, 3.5, 0.5])
     with table_column:
         st.header('Space by space breakdown')
         df = pd.read_csv(space_summary.as_posix())
