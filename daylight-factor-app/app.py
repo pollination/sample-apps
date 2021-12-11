@@ -10,10 +10,8 @@ from honeybee_radiance.properties.model import ModelRadianceProperties
 from honeybee_radiance.sensorgrid import SensorGrid
 from honeybee_vtk.actor import Actor
 from honeybee_vtk.camera import Camera
-from honeybee_vtk.config import load_config
 from honeybee_vtk.model import DisplayMode
 from honeybee_vtk.model import Model as VTKModel
-from honeybee_vtk.model import SensorGridOptions
 from honeybee_vtk.scene import Scene
 from honeybee_vtk.vtkjs.schema import SensorGridOptions
 from queenbee.job.job import JobStatusEnum
@@ -189,17 +187,9 @@ def view_results(owner, project, job_id, api_key):
     model_dict = json.load(job.download_artifact(input_model_path))
     hb_model = Model.from_dict(model_dict)
     res_model = VTKModel(hb_model, SensorGridOptions.Sensors)
-    res_model.update_display_mode(DisplayMode.Wireframe)
-    scene = Scene()
-    actors = Actor.from_model(res_model)
-    bounds = Actor.get_bounds(actors)
-    centroid = Actor.get_centroid(actors)
-    cameras = Camera.aerial_cameras(bounds=bounds, centroid=centroid)
-    scene.add_actors(actors)
-    scene.add_cameras(cameras)
-    res_model = load_config(config_file, res_model, scene)
-
-    return res_model.to_vtkjs(output_folder.as_posix(), 'model')
+    return res_model.to_vtkjs(folder=output_folder.as_posix(), name='model',
+                              config=config_file.as_posix(),
+                              display_mode=DisplayMode.Wireframe)
 
 
 query = Query()
