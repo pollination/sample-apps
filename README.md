@@ -1,7 +1,7 @@
 # Sample Pollination Apps
 A collection of sample apps for Pollination.
 
-Pollination apps are built using [Streamlit app framework](https://github.com/streamlit/). 
+Pollination apps are built using [Streamlit app framework](https://github.com/streamlit/).
 
 If you are new Streamlit see their [get started documentation](https://docs.streamlit.io/library/get-started).
 
@@ -48,6 +48,10 @@ pip install -r requirements.txt
 streamlit run app.py
 
 ```
+
+# Deploying New Apps
+
+To deploy new apps from this repository to Pollination's backend follow the instruction in [`pollination/sample-apps-devops`](https://github.com/pollination/sample-apps-devops).
 
 # License
 See each app's subfolder for app's license
