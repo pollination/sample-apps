@@ -19,6 +19,11 @@ st.title('Sample Weather Data Visualization App!')
 
 
 def main():
+
+    # create the data folder if it is not created already
+    folder = pathlib.Path('./data')
+    folder.mkdir(parents=True, exist_ok=True)
+    
     # split the first container into 2
     with st.container():
         col1, col2 = st.columns(2)
@@ -69,8 +74,6 @@ def main():
 
         with col2:
             # add sunpath
-            folder = pathlib.Path('./data')
-            folder.mkdir(parents=True, exist_ok=True)
             sp = Sunpath.from_location(epw_loc)
             sp_file = sp.to_vtkjs(folder.as_posix(),
                                 data=[epw.diffuse_horizontal_radiation,
@@ -103,6 +106,7 @@ def main():
             hp = HourlyPlot(data, z_dim=100)
             hp_file = hp.to_vtkjs(folder.as_posix(), file_name=selected)
             st_vtkjs(hp_file.read_bytes(), menu=True, key='hourly_plot')
+
 
 if __name__ == '__main__':
     main()
