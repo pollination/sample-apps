@@ -29,6 +29,7 @@ def create_sunpath(latitude, longitude, north):
     folder.mkdir(parents=True, exist_ok=True)
     name = f'{latitude}_{longitude}_{north}'
     sp = Sunpath(latitude, longitude, north_angle=north)
+    # create a vtkjs file for sunpath
     sp_file = sp.to_vtkjs(folder.as_posix(), file_name=name)
     return sp_file
 
