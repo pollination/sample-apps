@@ -37,6 +37,7 @@ defult_url = query_params['url'][0] if 'url' in query_params else \
     'https://app.pollination.cloud/projects/chriswmackey/demo/jobs/0cd8f29b-71e1-44be-9ce2-7d4c6e4e5d13/runs/ec6bbd7e-1579-550c-9e89-2ba424cd2d04'
 
 
+@st.cache(show_spinner=False)
 def download_folder(run, output_name, folder):
     results_zip = run.download_zipped_output(output_name)
     with zipfile.ZipFile(results_zip) as zip_folder:
@@ -52,19 +53,15 @@ def download_files(run):
     _, info = next(df.iterrows())
     metrics = [
         'illuminance-9am', 'illuminance-3pm', 'pass-fail-9am', 'pass-fail-3pm',
-        'pass-fail-combined'
+        'pass-fail-combined', 'credit-summary', 'space-summary'
     ]
 
     for metric in metrics:
         download_folder(run, metric, results_folder.joinpath(metric))
 
-    credits = results_folder.joinpath('credit_summary.json')
-    data = json.load(job.download_artifact(info['credit-summary']))
-    credits.write_text(json.dumps(data))
+    credits = results_folder.joinpath('credit-summary', 'credit_summary.json')
 
-    space_summary = results_folder.joinpath('space_summary.csv')
-    data = job.download_artifact(info['space-summary'])
-    space_summary.write_bytes(data.read())
+    space_summary = results_folder.joinpath('space-summary', 'space_summary.csv')
 
     # write configs to load the results
     viz_file = results_folder.joinpath('model.vtkjs')
@@ -74,9 +71,7 @@ def download_files(run):
     model = Model(hb_model, SensorGridOptions.Sensors)
     model.to_vtkjs(folder=viz_file.parent, name=viz_file.stem,
                    config=cfg_file, display_mode=DisplayMode.Wireframe)
-    # get_model_with_results(
-    #     model_dict, viz_file, cfg_file, display_mode='wireframe'
-    # )
+
     return viz_file, credits, space_summary
 
 
@@ -95,6 +90,10 @@ with run_url:
 
 # download related results
 if run is not None:
+
+    with st.spinner('Downloading file...'):
+        viz_file, credits, space_summary = download_files(run)
+
     try:
         with st.spinner('Downloading file...'):
             viz_file, credits, space_summary = download_files(run)
@@ -144,7 +143,7 @@ if run is not None:
             if points > 1:
                 st.balloons()
             df = pd.DataFrame.from_dict(data, orient='index', columns=['values'])
-            st.table(df.style.set_precision(1))
+            st.table(df.style.format(precision=1))
         with st.expander('Learn more about using the 3D viewer'):
             st.markdown(
                 ' 1. Click on the ☰ icon to see the layers.\n\n'
@@ -159,4 +158,4 @@ if run is not None:
     with table_column:
         st.header('Space by space breakdown')
         df = pd.read_csv(space_summary.as_posix())
-        st.table(df.style.set_precision(1))
+        st.table(df.style.format(precision=1))
