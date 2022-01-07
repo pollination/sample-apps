@@ -2,3 +2,4 @@ pollination-streamlit>=0.1.1
 streamlit-vtkjs
 ladybug-pandas>=0.4.0
 ladybug-vtk>=0.5.0
+ladybug-charts>=1.15.1
