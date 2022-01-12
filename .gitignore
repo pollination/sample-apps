@@ -130,3 +130,5 @@ dmypy.json
 
 # apps data folder
 data/
+
+test.py
