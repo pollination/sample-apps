@@ -34,7 +34,7 @@ def get_image(keyword):
     # create a new folder to download the image
     path.mkdir(parents=True, exist_ok=True)
     filters = dict(size='medium', type='photo',
-                    license='commercial,modify')
+                   license='commercial,modify')
     google_crawler = GoogleImageCrawler(storage={'root_dir': './assets/image'})
     google_crawler.crawl(keyword=keyword, max_num=1, filters=filters)
 
@@ -250,6 +250,183 @@ def main():
 
         figure = hourly_plot.plot()
         st.plotly_chart(figure, use_container_width=True)
+
+    ####################################################################################
+    # Bar chart
+    ####################################################################################
+    with st.container():
+
+        st.header('Bar chart')
+        st.markdown(
+            'Select one or more environmental variable from the EPW weatherfile to'
+            ' visualize side by side on a monthly or daily bar chart. By default, '
+            ' "Dry bulb temperature" and "relative humidity" are selected.')
+
+        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+
+        with col1:
+            # select the data to visualize
+            fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
+
+            with st.expander('Select variables'):
+                selection = []
+                for var in fields.keys():
+                    if var == 'Dry Bulb Temperature' or var == 'Relative Humidity':
+                        selection.append(st.checkbox(var, value=True))
+                    else:
+                        selection.append(st.checkbox(var, value=False))
+
+        with col2:
+            with st.expander('Select data type'):
+                data_type = st.selectbox('', ('Monthly average', 'Monthly total', 'Daily average',
+                                              'Daily total'), key=0)
+
+        with col3:
+            st.text('')
+            switch = st.checkbox('Switch colors', value=False, key='bar_chart_switch')
+
+        with col4:
+            st.text('')
+            stack = st.checkbox('Stack', value=False, key='bar_chart_stacked')
+
+        if switch:
+            colors = list(colorset)
+            colors.reverse()
+        else:
+            colors = colorset
+
+        data = []
+        for count, item in enumerate(selection):
+            if item:
+                var = epw._get_data_by_field(fields[list(fields.keys())[count]])
+                if data_type == 'Monthly average':
+                    data.append(var.average_monthly())
+                elif data_type == 'Monthly total':
+                    data.append(var.total_monthly())
+                elif data_type == 'Daily average':
+                    data.append(var.average_daily())
+                elif data_type == 'Daily total':
+                    data.append(var.total_daily())
+
+        lb_lp = LegendParameters(colors=colors)
+        monthly_chart = MonthlyChart(data, legend_parameters=lb_lp)
+        figure = monthly_chart.plot(stack=stack, title=data_type, show_title=True)
+        st.plotly_chart(figure, use_container_width=True)
+
+    ####################################################################################
+    # Hourly line chart
+    ####################################################################################
+    with st.container():
+
+        st.header('Hourly line chart')
+        st.markdown(
+            'Select an environmental variable from the EPW weatherfile to visualize on a'
+            ' line chart. By default, the hourly data is set to "relative humidity".')
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # select the data to visualize
+            fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
+
+            selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), index=2,
+                key='line_chart')
+            data = epw._get_data_by_field(fields[selected])
+
+        with col2:
+            st.text("")
+            st.text("")
+            st.text("")
+            switch = st.checkbox('Switch colors', key='line_chart_switch',
+                                 help='Reverse the colorset')
+
+        if switch:
+            colors = list(colorset)
+            colors.reverse()
+        else:
+            colors = colorset
+
+        fig = data.line_chart(color=colors[-1])
+        st.plotly_chart(fig, use_container_width=True)
+
+    ####################################################################################
+    # Per hour line chart
+    ####################################################################################
+    with st.container():
+
+        st.header('Per hour line chart')
+        st.markdown(
+            'Select an environmental variable from the EPW weatherfile to visualize on a'
+            ' per hour line chart. By default, the hourly data is set to "Direct normal'
+            ' radiation".')
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # select the data to visualize
+            fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
+
+            selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), index=8,
+                key='per_hour_chart')
+            data = epw._get_data_by_field(fields[selected])
+
+        with col2:
+            st.text("")
+            st.text("")
+            st.text("")
+            switch = st.checkbox('Switch colors', key='per_hour_chart_switch',
+                                 help='Reverse the colorset')
+
+        if switch:
+            colors = list(colorset)
+            colors.reverse()
+        else:
+            colors = colorset
+
+        fig = data.per_hour_line_chart(title=data.header.unit, show_title=True,
+                                       color=colors[-1])
+        st.plotly_chart(fig, use_container_width=True)
+
+    ####################################################################################
+    # Daily chart
+    ####################################################################################
+    with st.container():
+
+        st.header('Daily chart')
+        st.markdown(
+            'Select an environmental variable from the EPW weatherfile to visualize on a'
+            ' daily chart. This chart shows average daily values. By default, the hourly'
+            ' data is set to "Total sky cover".')
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # select the data to visualize
+            fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
+
+            selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), index=16,
+                key='daily_chart')
+            data = epw._get_data_by_field(fields[selected])
+
+        with col2:
+            st.text("")
+            st.text("")
+            st.text("")
+            switch = st.checkbox('Switch colors', key='daily_chart_switch',
+                                 help='Reverse the colorset')
+
+        if switch:
+            colors = list(colorset)
+            colors.reverse()
+        else:
+            colors = colorset
+
+        data = data.average_daily()
+        fig = data.bar_chart(color=colors[-1])
+        st.plotly_chart(fig, use_container_width=True)
 
     ####################################################################################
     # SUNPATH
