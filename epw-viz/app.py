@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 import shutil
 
-from streamlit_vtkjs import st_vtkjs
-
 from icrawler.builtin import GoogleImageCrawler
 from geopy.geocoders import Nominatim
 
@@ -25,7 +23,20 @@ from ladybug_comfort.chart.polygonpmv import PolygonPMV
 from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
 
 from ladybug_charts.utils import Strategy
-from ladybug_charts.to_figure import bar_chart
+
+
+@st.cache(suppress_st_warning=True)
+def get_image(keyword):
+    # nuke the images folder if exists
+    path = pathlib.Path('./assets/image')
+    if path.is_dir():
+        shutil.rmtree(path)
+    # create a new folder to download the image
+    path.mkdir(parents=True, exist_ok=True)
+    filters = dict(size='medium', type='photo',
+                    license='commercial,modify')
+    google_crawler = GoogleImageCrawler(storage={'root_dir': './assets/image'})
+    google_crawler.crawl(keyword=keyword, max_num=1, filters=filters)
 
 
 def city_name(latitude: float, longitude: float) -> str:
@@ -110,23 +121,13 @@ def main():
             # get the image from the internet
             # get the city name from latitude and longitude
             keyword = city_name(epw_loc.latitude, epw_loc.longitude) + ' city image'
-            # nuke the images folder if exists
-            path = pathlib.Path('./assets/image')
-            if path.is_dir():
-                shutil.rmtree(path)
-            # create a new folder to download the image
-            path.mkdir(parents=True, exist_ok=True)
-            filters = dict(size='medium', type='photo',
-                           license='commercial,modify')
-            google_crawler = GoogleImageCrawler(storage={'root_dir': './assets/image'})
-            google_crawler.crawl(keyword=keyword, max_num=1, filters=filters)
+            get_image(keyword)
 
             # If someone loads an image from local drive, use it else use the image from
             # the internet
             if local_image:
                 st.image(local_image)
             else:
-                print(pathlib.Path('./assets/image/000001.jpg').is_file())
                 try:
                     st.image('./assets/image/000001.jpg')
                 except FileNotFoundError:
