@@ -1,10 +1,18 @@
-# an interactive app for drawing sunpath
+"""The Pollination sunpath app."""
+
+
 import pathlib
+import csv
 
 import streamlit as st
 from streamlit_vtkjs import st_vtkjs
 
+from typing import List, Tuple
+
 from ladybug.sunpath import Sunpath
+from ladybug.epw import EPW, EPWFields
+from ladybug.location import Location
+from ladybug.datacollection import HourlyContinuousCollection
 
 # make it look good by setting up the title, icon, etc.
 st.set_page_config(
@@ -17,24 +25,118 @@ st.sidebar.image(
 )
 
 # create the control panel
-latitude = st.sidebar.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
-longitude = st.sidebar.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
-north = st.sidebar.slider('North', -180, 180, 0, 1)
-menu = st.sidebar.checkbox('Show viewer controls', value=False)
+with st.sidebar:
 
-@st.cache(suppress_st_warning=True)
-def create_sunpath(latitude, longitude, north):
-    """Create the sunpath geometry."""
+    latitude = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
+    longitude = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
+    north = st.slider('North', -180, 180, 0, 1)
+    projection = st.slider('Projection', 2, 3, value=3, help='Choose between 2D and 3D.')
+
+    # load EPW
+    with st.expander('Sunpath for EPW'):
+        epw_data = st.file_uploader('Load EPW', type='epw')
+        # if epw file is uploaded, load it
+        if epw_data:
+            epw_file = pathlib.Path('./data/sample.epw')
+            epw_file.parent.mkdir(parents=True, exist_ok=True)
+            epw_file.write_bytes(epw_data.read())
+            epw = EPW(epw_file)
+        else:
+            epw = None
+
+    # select data from EPW to mount on Sunpath
+    fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
+    with st.expander('Load data on sunpath'):
+        selection = []
+        for var in fields.keys():
+            selection.append(st.checkbox(var, value=False))
+
+        if any(selection) and not epw_data:
+            load_data = False
+        else:
+            load_data = True
+
+        if load_data:
+            data = []
+            for count, var in enumerate(selection):
+                if var:
+                    data.append(epw._get_data_by_field(
+                        fields[list(fields.keys())[count]]))
+
+    st.markdown('----')
+
+    menu = st.checkbox('Show viewer controls', value=False)
+
+# need to raise this in a way that users can see
+if any(selection) and not epw_data:
+    st.error('You need to load an EPW file first.')
+
+
+def create_sunpath(latitude: float, longitude: float, north: int,
+                   location: Location = None,
+                   data: List[HourlyContinuousCollection] = None) -> Tuple[pathlib.Path,
+                                                                           Sunpath]:
+    """Create a sunpath and generate a vtkjs file for it.
+
+    Args:
+        latitude: The latitude of the location.
+        longitude: The longitude of the location.
+        north: The north angle of the sunpath.
+        location: A ladybug location object. Defaults to None.
+        data: A list of ladybug HourlyContinuousCollection objects. Defaults to None.
+
+    Returns:
+        A tuple of two elements
+
+        -   A pathlib.Path object pointing to the vtkjs file.
+
+        -   A ladybug Sunpath object.
+    """
     folder = pathlib.Path('./data')
     folder.mkdir(parents=True, exist_ok=True)
     name = f'{latitude}_{longitude}_{north}'
-    sp = Sunpath(latitude, longitude, north_angle=north)
+
+    if location:
+        sp = Sunpath.from_location(epw.location, north_angle=north)
+    else:
+        sp = Sunpath(latitude, longitude, north_angle=north)
+
     # create a vtkjs file for sunpath
-    sp_file = sp.to_vtkjs(folder.as_posix(), file_name=name)
-    return sp_file
+    if projection == 3:
+        sp_vtkjs = sp.to_vtkjs(folder.as_posix(), file_name=name, data=data)
+    else:
+        sp_vtkjs = sp.to_vtkjs(folder.as_posix(), file_name=name,
+                               data=data, make_2d=True)
+    return sp_vtkjs, sp
+
 
 # call the function to create the sunpath
-sp_file = create_sunpath(latitude, longitude, north)
+if epw_data:
+    if data:
+        result = create_sunpath(latitude, longitude, north,
+                                location=epw.location, data=data)
+    else:
+        result = create_sunpath(latitude, longitude, north,
+                                location=epw.location)
+    header_text = f'Sunpath for {epw.location.city} '
+else:
+    result = create_sunpath(latitude, longitude, north)
+    header_text = f'Sunpath for latitude: {latitude} and longitude: {longitude}'
+
+
+# add header
+st.markdown(header_text)
 
 # update the viewer
-st_vtkjs(sp_file.read_bytes(), menu=menu, key='viewer')
+st_vtkjs(result[0].read_bytes(), menu=menu, key='viewer')
+
+
+# name of csv file
+filename = 'sunpath.csv'
+
+csv_data = ['0', '1', '2', '34']
+# writing to csv file
+with open(filename, 'w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file)
+    for item in csv_data:
+        csv_writer.writerow(item.rstrip())
