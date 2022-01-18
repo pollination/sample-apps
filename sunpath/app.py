@@ -3,7 +3,6 @@
 
 import pathlib
 import csv
-import base64
 
 import streamlit as st
 from streamlit_vtkjs import st_vtkjs
