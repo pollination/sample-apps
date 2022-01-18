@@ -18,7 +18,7 @@ from ladybug.datacollection import HourlyContinuousCollection
 
 # make it look good by setting up the title, icon, etc.
 st.set_page_config(
-    page_title='Interactive Sunpath',
+    page_title='Sunpath',
     page_icon='https://app.pollination.cloud/favicon.ico'
 )
 st.sidebar.image(
