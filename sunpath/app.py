@@ -9,6 +9,7 @@ from streamlit_vtkjs import st_vtkjs
 
 from typing import List, Tuple
 
+from ladybug.color import Color
 from ladybug.sunpath import Sunpath
 from ladybug.epw import EPW, EPWFields
 from ladybug.location import Location
@@ -103,10 +104,11 @@ def create_sunpath(latitude: float, longitude: float, north: int,
 
     # create a vtkjs file for sunpath
     if projection == 3:
-        sp_vtkjs = sp.to_vtkjs(folder.as_posix(), file_name=name, data=data)
+        sp_vtkjs = sp.to_vtkjs(folder.as_posix(), file_name=name,
+                               data=data, sun_color=Color(235, 33, 38))
     else:
         sp_vtkjs = sp.to_vtkjs(folder.as_posix(), file_name=name,
-                               data=data, make_2d=True)
+                               data=data, sun_color=Color(235, 33, 38), make_2d=True)
     return sp_vtkjs, sp
 
 
