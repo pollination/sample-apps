@@ -3,6 +3,7 @@
 
 import pathlib
 import csv
+import base64
 
 import streamlit as st
 from streamlit_vtkjs import st_vtkjs
@@ -130,13 +131,38 @@ st.markdown(header_text)
 # update the viewer
 st_vtkjs(result[0].read_bytes(), menu=menu, key='viewer')
 
+# generate a csv file
+write_csv = st.checkbox('Generate CSV', value=False)
 
-# name of csv file
-filename = 'sunpath.csv'
 
-csv_data = ['0', '1', '2', '34']
-# writing to csv file
-with open(filename, 'w', newline='') as csv_file:
-    csv_writer = csv.writer(csv_file)
-    for item in csv_data:
-        csv_writer.writerow(item.rstrip())
+def write_csv_file(sunpath: Sunpath, epw: EPW = None) -> str:
+    filename = './data/sunpath.csv'
+
+    # writing to csv files
+    with open(filename, 'w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+
+        if epw:
+            csv_writer.writerow(['City', epw.location.city])
+        csv_writer.writerow(['Latitude', str(sunpath.latitude)])
+        csv_writer.writerow(['Longitude', str(sunpath.longitude)])
+        csv_writer.writerow(['Month', 'Day', 'Hour', 'Altitude', 'Azimuth'])
+
+        # write values for all hours of the year
+        for hr in range(8760):
+            sun = sunpath.calculate_sun_from_hoy(hr)
+            date_time = sun.datetime
+            csv_writer.writerow([date_time.month, date_time.day,
+                                 date_time.hour, sun.altitude, sun.azimuth])
+
+    return filename
+
+
+# write csv and serve a button if csv is requested
+if write_csv:
+    if epw_data:
+        csv_file_path = write_csv_file(result[1], epw)
+    else:
+        csv_file_path = write_csv_file(result[1])
+    with open(csv_file_path, 'r') as f:
+        st.download_button('Download CSV', f, file_name='sunpath.csv')
