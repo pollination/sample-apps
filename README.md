@@ -32,6 +32,7 @@ You can get started by developing on top of these apps. Until we provide an offi
 | [Energy Use App](./energy-use/app.py) | An example for reading the results of an annual energy use sqlite file. | [Link](https://streamlit-experiment-energy-use-bctgvz4o3a-uc.a.run.app/) |
 | [EPW Visualization](./epw-viz/app.py) | An example for using Ladybug Python libraries. This app doesn't have dependencies on Pollination. | [Link](https://streamlit-experiment-epw-viz-bctgvz4o3a-uc.a.run.app/) |
 | [LEED Option II](./leed-option-ii/app.py) | Visualize the outputs of the LEED Option II recipe in a report-like app. | [Link](https://streamlit-experiment-leed-option-ii-bctgvz4o3a-uc.a.run.app/) |
+| [Sunpath](./sunpath/app.py) | Interactive Sunpath App. | [Link](https://streamlit-experiment-sunpath-bctgvz4o3a-uc.a.run.app/) |
 
 
 # Local development
