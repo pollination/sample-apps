@@ -132,7 +132,7 @@ def main():
                                                   'Add wind & sun'],
                             help=wind_help + '\n' + sun_help + '\n' + win_sun_help)
 
-    # selecting scnearios to plot
+    # selecting scenarios to plot
     if scenario == 'Add wind & sun':
         comf_objs = [
             UTCI.from_epw(epw, include_wind=False, include_sun=False),
@@ -213,11 +213,11 @@ def main():
         st.markdown('### Outdoor-comfort')
         # page header
         st.markdown('Use this app to calculate the Universal Thermal Climate Index (UTCI)'
-                    ' for a set of input climate conditions.  Perhaps the most familiar '
-                    ' application of Univeral Thermal Climate Index(UTCI) is the temperature '
+                    ' for a set of input climate conditions. Perhaps the most familiar'
+                    ' application of Universal Thermal Climate Index(UTCI) is the temperature'
                     ' given by TV weathermen and women when they say that, "even though the'
                     ' dry bulb temperature outside is a certain value, the temperature actually'
-                    '"feels like" something higher or lower.')
+                    ' "feels like" something higher or lower.')
 
         st.markdown('UTCI is this temperature of what the weather "feels like" and it'
                     ' takes into account the radiant temperature(sometimes including solar radiation)'
@@ -228,9 +228,9 @@ def main():
         st.markdown(
             """
             Typically, 
-        -  A UTCI between 9 and 26 degrees Celcius indicates no thermal stress or comfortable conditions outdoors.
+        -  A UTCI between 9 and 26 degrees Celsius indicates no thermal stress or comfortable conditions outdoors.
 
-        -  A UTCI between 26 and 28 degrees Celcius indicates slight heat stress(comfortable for short periods of time).
+        -  A UTCI between 26 and 28 degrees Celsius indicates slight heat stress(comfortable for short periods of time).
 
         -  Between 28 and 32 degrees, UTCI indicates moderate heat stress(hot but not dangerous).
 
