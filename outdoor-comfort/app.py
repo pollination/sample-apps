@@ -128,51 +128,51 @@ def main():
 
         win_sun_help = 'Select "Add wind & sun" to include both.'
 
-        scenario = st.radio('Scenarios', options=[
-            'No wind & sun', 'Add wind', 'Add sun', 'Add wind & sun'],
-            help=wind_help + '\n' + sun_help + '\n' + win_sun_help)
+        scenario = st.radio('Scenarios', options=['No wind & sun', 'Add wind', 'Add sun',
+                                                  'Add wind & sun'],
+                            help=wind_help + '\n' + sun_help + '\n' + win_sun_help)
 
-    with st.container():
+    # selecting scnearios to plot
+    if scenario == 'Add wind & sun':
+        comf_objs = [
+            UTCI.from_epw(epw, include_wind=False, include_sun=False),
+            UTCI.from_epw(epw, include_wind=True, include_sun=False),
+            UTCI.from_epw(epw, include_sun=True, include_wind=False),
+            UTCI.from_epw(epw, include_wind=True, include_sun=True)
+        ]
+    elif scenario == 'Add wind':
+        comf_objs = [
+            UTCI.from_epw(epw, include_wind=False, include_sun=False),
+            UTCI.from_epw(epw, include_wind=True, include_sun=False),
+        ]
+    elif scenario == 'Add sun':
+        comf_objs = [
+            UTCI.from_epw(epw, include_wind=False, include_sun=False),
+            UTCI.from_epw(epw, include_sun=True, include_wind=False),
+        ]
+    else:
+        comf_objs = [UTCI.from_epw(epw, include_wind=False, include_sun=False)]
 
-        # page header
-        st.header('Outdoor Comfort')
+    # plotting figures with titles
+    def plot_figure_with_title(hourly_data: HourlyContinuousCollection,
+                               scenario: str,
+                               chart_title: str,
+                               percent_comfortable: float,
+                               analysis_period: AnalysisPeriod = None,
+                               conditional_statement: str = None,
+                               min_range: float = None,
+                               max_range: float = None,
+                               num_labels: int = None,
+                               labels: List[float] = None,
+                               colors=colorset) -> None:
+        """Plot figure."""
+        col1, col2 = st.columns([5, 1])
 
-        # selecting scnearios to plot
-        if scenario == 'Add wind & sun':
-            comf_objs = [
-                UTCI.from_epw(epw, include_wind=False, include_sun=False),
-                UTCI.from_epw(epw, include_wind=True, include_sun=False),
-                UTCI.from_epw(epw, include_sun=True, include_wind=False),
-                UTCI.from_epw(epw, include_wind=True, include_sun=True)
-            ]
-        elif scenario == 'Add wind':
-            comf_objs = [
-                UTCI.from_epw(epw, include_wind=False, include_sun=False),
-                UTCI.from_epw(epw, include_wind=True, include_sun=False),
-            ]
-        elif scenario == 'Add sun':
-            comf_objs = [
-                UTCI.from_epw(epw, include_wind=False, include_sun=False),
-                UTCI.from_epw(epw, include_sun=True, include_wind=False),
-            ]
-        else:
-            comf_objs = [UTCI.from_epw(epw, include_wind=False, include_sun=False)]
+        with col1:
 
-        def plot_figure(hourly_data: HourlyContinuousCollection,
-                        analysis_period: AnalysisPeriod = None,
-                        conditional_statement: str = None,
-                        min_range: float = None,
-                        max_range: float = None,
-                        num_labels: int = None,
-                        labels: List[float] = None,
-                        colors=colorset) -> None:
-            """Plot figure."""
-
-            # apply analysis period
+            title = f'{chart_title} {scenario}'
             if analysis_period:
                 hourly_data = hourly_data.filter_by_analysis_period(analysis_period)
-
-            # apply conditional statement
             if conditional_statement:
                 try:
                     hourly_data = hourly_data.filter_by_conditional_statement(
@@ -180,14 +180,69 @@ def main():
                 except AssertionError:
                     st.error('No values found for that conditional statement.')
                     return
-
-            # apply legend info
-            figure = hourly_data.heat_map(colors=colors, min_range=min_range,
+            figure = hourly_data.heat_map(title=title, show_title=True,
+                                          colors=colors, min_range=min_range,
                                           max_range=max_range, num_labels=num_labels,
                                           labels=labels)
-
-            # plot figure
             st.plotly_chart(figure, use_container_width=True)
+
+        with col2:
+            title = ("<div><br>" +
+                     "<br>" +
+                     "<br>" +
+                     "<br>" +
+                     "<br>" +
+                     "<br>" +
+                     " <h3 style ='text-align: center; padding-bottom:0px;" +
+                     f" color: gray;'>{round(percent_comfortable, 2)} %</h3>" +
+                     "<p style ='text-align: center;" +
+                     f" color: gray;'>comfortable in {len(hourly_data.values)} hours</div>")
+
+            st.markdown(title, unsafe_allow_html=True)
+
+    title_scenario = {
+        0: ' without the effect of sun and wind',
+        1: ' with the effect of wind 💨',
+        2: ' with the effect of sun ☀️',
+        3: ' with the effect of sun ☀️ and wind 💨'
+    }
+
+    # Main page
+    with st.container():
+
+        st.markdown('### Outdoor-comfort')
+        # page header
+        st.markdown('Use this app to calculate the Universal Thermal Climate Index (UTCI)'
+                    ' for a set of input climate conditions.  Perhaps the most familiar '
+                    ' application of Univeral Thermal Climate Index(UTCI) is the temperature '
+                    ' given by TV weathermen and women when they say that, "even though the'
+                    ' dry bulb temperature outside is a certain value, the temperature actually'
+                    '"feels like" something higher or lower.')
+
+        st.markdown('UTCI is this temperature of what the weather "feels like" and it'
+                    ' takes into account the radiant temperature(sometimes including solar radiation)'
+                    ', relative humidity, and wind speed.  UTCI uses these variables in a human'
+                    ' energy balance model to give a temperature value that is indicative of the'
+                    ' heat stress or cold stress felt by a human body outdoors')
+
+        st.markdown(
+            """
+            Typically, 
+        -  A UTCI between 9 and 26 degrees Celcius indicates no thermal stress or comfortable conditions outdoors.
+
+        -  A UTCI between 26 and 28 degrees Celcius indicates slight heat stress(comfortable for short periods of time).
+
+        -  Between 28 and 32 degrees, UTCI indicates moderate heat stress(hot but not dangerous).
+
+        -  Between 32 and 38 degrees, UTCI indicates strong heat stress(dangerous beyond short periods of time).
+
+        -  Above 38, UTCI indicates very strong to extreme heat stress(very dangerous).
+        """
+        )
+
+        st.markdown('The app will soon provide controls to edit these parameters.')
+
+        st.subheader(f'UTCI for {epw.location.city}')
 
         if anlysis_type == 'utci':
             # get min and max of first hourly data and apply it to all to keep
@@ -195,31 +250,45 @@ def main():
             min = comf_objs[0].universal_thermal_climate_index.min
             max = comf_objs[0].universal_thermal_climate_index.max
             # TODO add legend labels as per number of labels
-            for obj in comf_objs:
-                plot_figure(obj.universal_thermal_climate_index, analysis_period=lb_ap,
-                            conditional_statement=conditional_statement,
-                            min_range=min, max_range=max)
+            for count, obj in enumerate(comf_objs):
+                plot_figure_with_title(obj.universal_thermal_climate_index,
+                                       title_scenario[count], 'UTCI',
+                                       obj.percent_comfortable,
+                                       analysis_period=lb_ap,
+                                       conditional_statement=conditional_statement,
+                                       min_range=min, max_range=max, colors=colorset)
 
         elif anlysis_type == 'comfort':
-            for obj in comf_objs:
-                plot_figure(obj.is_comfortable, analysis_period=lb_ap,
-                            conditional_statement=conditional_statement,
-                            min_range=0, max_range=1,
-                            num_labels=2, labels=[0, 1])
+            for count, obj in enumerate(comf_objs):
+                plot_figure_with_title(obj.is_comfortable,
+                                       title_scenario[count], 'Comfortable or not',
+                                       obj.percent_comfortable,
+                                       analysis_period=lb_ap,
+                                       conditional_statement=conditional_statement,
+                                       min_range=0, max_range=1,
+                                       num_labels=2, labels=[0, 1], colors=colorset)
 
         elif anlysis_type == 'condition':
-            for obj in comf_objs:
-                plot_figure(obj.thermal_condition, analysis_period=lb_ap,
-                            conditional_statement=conditional_statement,
-                            min_range=-1, max_range=1,
-                            num_labels=3, labels=[-1, 0, 1])
+            for count, obj in enumerate(comf_objs):
+                plot_figure_with_title(obj.thermal_condition,
+                                       title_scenario[count], 'Comfort conditions',
+                                       obj.percent_comfortable,
+                                       analysis_period=lb_ap,
+                                       conditional_statement=conditional_statement,
+                                       min_range=-1, max_range=1,
+                                       num_labels=3, labels=[-1, 0, 1], colors=colorset)
 
         elif anlysis_type == 'category':
-            for obj in comf_objs:
-                plot_figure(obj.thermal_condition_eleven_point, analysis_period=lb_ap,
-                            conditional_statement=conditional_statement,
-                            min_range=-5, max_range=5,
-                            num_labels=11, labels=[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
+            for count, obj in enumerate(comf_objs):
+                plot_figure_with_title(obj.thermal_condition_eleven_point,
+                                       title_scenario[count], 'Comfort categories',
+                                       obj.percent_comfortable,
+                                       analysis_period=lb_ap,
+                                       conditional_statement=conditional_statement,
+                                       min_range=-5, max_range=5,
+                                       num_labels=11,
+                                       labels=[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5],
+                                       colors=colorset)
 
 
 if __name__ == '__main__':
