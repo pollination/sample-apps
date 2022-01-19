@@ -3,7 +3,6 @@
 
 import pathlib
 import csv
-from numpy import row_stack
 
 import streamlit as st
 from streamlit_vtkjs import st_vtkjs
@@ -206,7 +205,7 @@ if platform == 'Rhino':
     col1, col2, col3 = st.columns(3)
 
     # get results from vtk
-    sun_file, sun_path = result
+    sun_file, sun_path, sun_color = result
 
     # values here
     radius = st.slider('Sun path radius', 0, 500, 100)
