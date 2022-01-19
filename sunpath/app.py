@@ -10,11 +10,13 @@ from streamlit_vtkjs import st_vtkjs
 
 from typing import List, Tuple
 
+from ladybug.compass import Compass
 from ladybug.color import Color
 from ladybug.sunpath import Sunpath
 from ladybug.epw import EPW, EPWFields
 from ladybug.location import Location
 from ladybug.datacollection import HourlyContinuousCollection
+from pollination_streamlit_io import inputs
 
 # make it look good by setting up the title, icon, etc.
 st.set_page_config(
@@ -185,3 +187,84 @@ if write_csv:
         csv_file_path = write_csv_file(result[1])
     with open(csv_file_path, 'r') as f:
         st.download_button('Download CSV', f, file_name='sunpath.csv')
+
+# rhino integration
+
+# get the platform from the query uri
+query = st.experimental_get_query_params()
+platform = query['__platform__'][0] if '__platform__' in query else 'web'
+
+if platform == 'Rhino':
+    def get_colored_geometry_json_strings(geometries, hex_color):
+        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        geometry_dicts = [g.to_dict() for g in geometries]
+        for d in geometry_dicts:
+            d['color'] = Color(*rgb).to_dict()
+        return geometry_dicts
+
+    # layout
+    col1, col2, col3 = st.columns(3)
+
+    # get results from vtk
+    sun_file, sun_path = result
+
+    # values here
+    radius = st.slider('Sun path radius', 0, 500, 100)
+
+    # create the compass
+    co = Compass(radius=radius,
+        north_angle=north,
+        spacing_factor=0.15)
+
+    with col1:
+        # analemma
+        col = st.color_picker('Analemma Color', '#000000', 
+            key='poly-col').lstrip('#')
+        polylines = sun_path.hourly_analemma_polyline3d(radius=radius)
+        polylines_dicts = get_colored_geometry_json_strings(polylines, col)
+
+        # arcs
+        col = st.color_picker('Arcs Color', '#bcbec0', 
+            key='arc-col').lstrip('#')
+        arcs = sun_path.monthly_day_arc3d(radius=radius)
+        arcs_dicts = get_colored_geometry_json_strings(arcs, col)
+
+    with col2:
+        # circles
+        col = st.color_picker('Circles Color', '#eb2126', 
+            key='circl-col').lstrip('#')
+        circles = co.all_boundary_circles
+        circles_dicts = get_colored_geometry_json_strings(circles, col)
+
+        # ticks
+        col = st.color_picker('Ticks Color', '#2ea8e0', 
+            key='tick-col').lstrip('#')
+        major_ticks = co.major_azimuth_ticks
+        minor_ticks = co.minor_azimuth_ticks
+        ticks = major_ticks + minor_ticks
+        ticks_dicts = get_colored_geometry_json_strings(ticks, col)
+
+    with col3:
+        # altitude circles
+        col = st.color_picker('Circle Color', '#05a64f', 
+            key='tick-col').lstrip('#')
+        altitude_circ = co.stereographic_altitude_circles
+        altitude_circ_dicts = get_colored_geometry_json_strings(altitude_circ, col)
+
+        # suns
+        points = []
+        col = st.color_picker('Sun Color', '#f2b24d', 
+            key='sun-col').lstrip('#')
+        hourly_suns = sun_path.hourly_analemma_suns()
+        for suns in hourly_suns:
+            for sun in suns:
+                if sun.is_during_day:
+                    pt = sun.position_3d(radius=radius)
+                    points.append(pt)
+        suns_dicts = get_colored_geometry_json_strings(points, col)
+
+    # group them
+    geometries = polylines_dicts + arcs_dicts + circles_dicts + \
+        ticks_dicts + altitude_circ_dicts + suns_dicts
+
+    inputs.send(geometries, 'my-secret-key', key='goo')

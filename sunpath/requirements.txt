@@ -1,2 +1,3 @@
 streamlit_vtkjs
 ladybug-vtk>=0.8.1
+pollination-streamlit-io
