@@ -49,6 +49,7 @@ with st.sidebar:
     # select data from EPW to mount on Sunpath
     fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
     with st.expander('Load data on sunpath'):
+        st.text('*Load EPW first*')
         selection = []
         for var in fields.keys():
             selection.append(st.checkbox(var, value=False))
@@ -68,10 +69,6 @@ with st.sidebar:
     st.markdown('----')
 
     menu = st.checkbox('Show viewer controls', value=False)
-
-# need to raise this in a way that users can see
-if any(selection) and not epw_data:
-    st.error('You need to load an EPW file first.')
 
 
 def create_sunpath(latitude: float, longitude: float, north: int,
