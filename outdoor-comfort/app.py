@@ -1,9 +1,15 @@
 """Pollination outdoor comfort app."""
+
 import pathlib
 
 import streamlit as st
 
+from plotly.graph_objects import Figure
+from typing import List
+
 from ladybug.epw import EPW
+from ladybug.color import Colorset
+from ladybug.datacollection import HourlyContinuousCollection
 from ladybug.analysisperiod import AnalysisPeriod
 from ladybug_comfort.collection.utci import UTCI
 from ladybug_comfort.parameter.utci import UTCIParameter
@@ -23,9 +29,10 @@ st.sidebar.image(
 
 def main():
     with st.sidebar:
+
         # epw file
         epw_source = st.selectbox(
-            'Select EPW data',
+            '',
             ['Sample EPW data', 'Upload an EPW file']
         )
 
@@ -43,6 +50,8 @@ def main():
 
         # analysis period
         with st.expander('Apply analysis period'):
+
+            # switch between 'default' and 'custom'
             analysis_period = st.radio('Select default analysis period',
                                        options=['Default', 'Custom'])
             if analysis_period == 'Custom':
@@ -61,10 +70,47 @@ def main():
 
                 lb_ap = AnalysisPeriod(st_month, st_day, st_hour,
                                        end_month, end_day, end_hour)
+            else:
+                lb_ap = None
 
         # conditional statement
         with st.expander('Apply conditional statement'):
             conditional_statement = st.text_input('')
+
+        # choose colorset
+        with st.expander('Apply colorset'):
+            colorsets = {
+                'original': Colorset.original(),
+                'nuanced': Colorset.nuanced(),
+                'annual_comfort': Colorset.annual_comfort(),
+                'benefit': Colorset.benefit(),
+                'benefit_harm': Colorset.benefit_harm(),
+                'black_to_white': Colorset.black_to_white(),
+                'blue_green_red': Colorset.blue_green_red(),
+                'cloud_cover': Colorset.cloud_cover(),
+                'cold_sensation': Colorset.cold_sensation(),
+                'ecotect': Colorset.ecotect(),
+                'energy_balance': Colorset.energy_balance(),
+                'energy_balance_storage': Colorset.energy_balance_storage(),
+                'glare_study': Colorset.glare_study(),
+                'harm': Colorset.harm(),
+                'heat_sensation': Colorset.heat_sensation(),
+                'multi_colored': Colorset.multi_colored(),
+                'multicolored_2': Colorset.multicolored_2(),
+                'multicolored_3': Colorset.multicolored_3(),
+                'openstudio_palette': Colorset.openstudio_palette(),
+                'peak_load_balance': Colorset.peak_load_balance(),
+                'shade_benefit': Colorset.shade_benefit(),
+                'shade_benefit_harm': Colorset.shade_benefit_harm(),
+                'shade_harm': Colorset.shade_harm(),
+                'shadow_study': Colorset.shadow_study(),
+                'therm': Colorset.therm(),
+                'thermal_comfort': Colorset.thermal_comfort(),
+                'view_study': Colorset.view_study()
+            }
+
+            selected_colorset = st.selectbox('', list(colorsets.keys()))
+            colorset = colorsets[selected_colorset]
 
         # analysis type
         anlysis_type = st.radio('Analysis type', options=[
@@ -93,7 +139,11 @@ def main():
             help=wind_help + '\n' + sun_help + '\n' + win_sun_help)
 
     with st.container():
+
+        # page header
         st.header('Outdoor Comfort')
+
+        # selecting scnearios to plot
         if scenario == 'Add wind & sun':
             comf_objs = [
                 UTCI.from_epw(epw, include_wind=False, include_sun=False),
@@ -114,50 +164,68 @@ def main():
         else:
             comf_objs = [UTCI.from_epw(epw, include_wind=False, include_sun=False)]
 
+        def plot_figure(hourly_data: HourlyContinuousCollection,
+                        analysis_period: AnalysisPeriod = None,
+                        conditional_statement: str = None,
+                        min_range: float = None,
+                        max_range: float = None,
+                        num_labels: int = None,
+                        labels: List[float] = None,
+                        colors=colorset) -> None:
+            """Plot figure."""
+
+            # apply analysis period
+            if analysis_period:
+                hourly_data = hourly_data.filter_by_analysis_period(analysis_period)
+
+            # apply conditional statement
+            if conditional_statement:
+                try:
+                    hourly_data = hourly_data.filter_by_conditional_statement(
+                        conditional_statement)
+                except AssertionError:
+                    st.error('No values found for that conditional statement.')
+                    return
+
+            # apply legend info
+            figure = hourly_data.heat_map(colors=colors, min_range=min_range,
+                                          max_range=max_range, num_labels=num_labels,
+                                          labels=labels)
+
+            # plot figure
+            st.plotly_chart(figure, use_container_width=True)
+
         if anlysis_type == 'utci':
+            # get min and max of first hourly data and apply it to all to keep
+            # consistent legend for comparison
+            min = comf_objs[0].universal_thermal_climate_index.min
+            max = comf_objs[0].universal_thermal_climate_index.max
+            # TODO add legend labels as per number of labels
             for obj in comf_objs:
-                utci = obj.universal_thermal_climate_index
-                if analysis_period == 'Custom':
-                    utci = utci.filter_by_analysis_period(lb_ap)
-                if conditional_statement:
-                    utci = utci.filter_by_conditional_statement(conditional_statement)
-                figure = utci.heat_map(num_labels=10)
-                st.plotly_chart(figure, use_container_width=True)
+                plot_figure(obj.universal_thermal_climate_index, analysis_period=lb_ap,
+                            conditional_statement=conditional_statement,
+                            min_range=min, max_range=max)
 
         elif anlysis_type == 'comfort':
             for obj in comf_objs:
-                comfort = obj.is_comfortable
-                if analysis_period == 'Custom':
-                    comfort = comfort.filter_by_analysis_period(lb_ap)
-                if conditional_statement:
-                    comfort = comfort.filter_by_conditional_statement(
-                        conditional_statement)
-                figure = comfort.heat_map(num_labels=2, labels=[0, 1])
-                st.plotly_chart(figure, use_container_width=True)
+                plot_figure(obj.is_comfortable, analysis_period=lb_ap,
+                            conditional_statement=conditional_statement,
+                            min_range=0, max_range=1,
+                            num_labels=2, labels=[0, 1])
 
         elif anlysis_type == 'condition':
             for obj in comf_objs:
-                condition = obj.thermal_condition
-                if analysis_period == 'Custom':
-                    condition = condition.filter_by_analysis_period(lb_ap)
-                if conditional_statement:
-                    condition = condition.filter_by_conditional_statement(
-                        conditional_statement)
-                figure = condition.heat_map(num_labels=3, labels=[-1, 0, 1])
-                st.plotly_chart(figure, use_container_width=True)
+                plot_figure(obj.thermal_condition, analysis_period=lb_ap,
+                            conditional_statement=conditional_statement,
+                            min_range=-1, max_range=1,
+                            num_labels=3, labels=[-1, 0, 1])
 
         elif anlysis_type == 'category':
             for obj in comf_objs:
-                category = obj.thermal_condition_eleven_point
-                if analysis_period == 'Custom':
-                    category = category.filter_by_analysis_period(lb_ap)
-                if conditional_statement:
-                    category = category.filter_by_conditional_statement(
-                        conditional_statement)
-                figure = category.heat_map(
-                    min_range=-5, max_range=5, num_labels=11, labels=[-5, -4, -3, -2, -1,
-                                                                      0, 1, 2, 3, 4, 5])
-                st.plotly_chart(figure, use_container_width=True)
+                plot_figure(obj.thermal_condition_eleven_point, analysis_period=lb_ap,
+                            conditional_statement=conditional_statement,
+                            min_range=-5, max_range=5,
+                            num_labels=11, labels=[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
 
 
 if __name__ == '__main__':
