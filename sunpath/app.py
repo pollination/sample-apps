@@ -90,7 +90,11 @@ def create_sunpath(latitude: float, longitude: float, north: int,
         -   A pathlib.Path object pointing to the vtkjs file.
 
         -   A ladybug Sunpath object.
+
+        -   A ladybug Color object.
+
     """
+    sun_color = Color(235, 33, 38)
     folder = pathlib.Path('./data')
     folder.mkdir(parents=True, exist_ok=True)
     name = f'{latitude}_{longitude}_{north}'
@@ -103,11 +107,11 @@ def create_sunpath(latitude: float, longitude: float, north: int,
     # create a vtkjs file for sunpath
     if projection == 3:
         sp_vtkjs = sp.to_vtkjs(folder.as_posix(), file_name=name,
-                               data=data, sun_color=Color(235, 33, 38))
+                               data=data, sun_color=sun_color)
     else:
         sp_vtkjs = sp.to_vtkjs(folder.as_posix(), file_name=name,
-                               data=data, sun_color=Color(235, 33, 38), make_2d=True)
-    return sp_vtkjs, sp
+                               data=data, sun_color=sun_color, make_2d=True)
+    return sp_vtkjs, sp, sun_color
 
 
 # call the function to create the sunpath
