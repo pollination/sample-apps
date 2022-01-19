@@ -31,22 +31,16 @@ def main():
     with st.sidebar:
 
         # epw file
-        epw_source = st.selectbox(
-            '',
-            ['Sample EPW data', 'Upload an EPW file']
-        )
+        with st.expander('Upload an EPW file'):
+            epw_data = st.file_uploader('', type='epw')
+            if epw_data:
+                epw_file = pathlib.Path('./data/sample.epw')
+                epw_file.parent.mkdir(parents=True, exist_ok=True)
+                epw_file.write_bytes(epw_data.read())
+            else:
+                epw_file = './assets/sample.epw'
 
-        if epw_source == 'Upload an EPW file':
-            epw_data = st.file_uploader('Select an EPW file', type='epw')
-            if not epw_data:
-                return
-            epw_file = pathlib.Path('./data/sample.epw')
-            epw_file.parent.mkdir(parents=True, exist_ok=True)
-            epw_file.write_bytes(epw_data.read())
-        else:
-            epw_file = './assets/sample.epw'
-
-        epw = EPW(epw_file)
+            epw = EPW(epw_file)
 
         # analysis period
         with st.expander('Apply analysis period'):
