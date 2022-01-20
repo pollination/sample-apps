@@ -429,7 +429,8 @@ def main():
 
         ap = lb_ap if lb_ap else AnalysisPeriod()
         analysis_period_par = f'Analysis period: start month{ap.st_month}, start day: {ap.st_day}, '\
-            f'start hour: {ap.st_hour}, end month: {ap.end_month}, end day: {ap.end_day}, \n '
+            f'start hour: {ap.st_hour}, end month: {ap.end_month}, end day: {ap.end_day},'\
+            f' end hour: {ap.end_hour} \n '
         conditional_par = f'Conditional statement: '\
             f' {conditional_statement if conditional_statement else "Not set"} \n'
         analysis_type_par = f'Analysis type: {anlysis_type} \n'
@@ -455,7 +456,7 @@ def main():
                      txt=percentages[count], align='C')
 
         html = create_download_link(pdf.output(
-            dest="S").encode("latin-1"), f'Outdoor-comfort_{epw.location.city}')
+            dest="S").encode("latin-1"), f'Outdoor comfort_{epw.location.city}')
         with col:
             st.markdown(html, unsafe_allow_html=True)
 
