@@ -215,12 +215,18 @@ def main():
             percentages.append(
                 f'{percent_comfortable}% comfortable in {num_hours} hours')
 
-    title_scenario = {
-        0: ' without the effect of sun and wind',
-        1: ' with the effect of wind 💨',
-        2: ' with the effect of sun ☀️',
-        3: ' with the effect of sun ☀️ and wind 💨'
-    }
+    if scenario == 'Add sun':
+        title_scenario = {
+            0: ' without the effect of sun and wind',
+            1: ' with the effect of sun ☀️'
+        }
+    else:
+        title_scenario = {
+            0: ' without the effect of sun and wind',
+            1: ' with the effect of wind 💨',
+            2: ' with the effect of sun ☀️',
+            3: ' with the effect of sun ☀️ and wind 💨'
+        }
 
     figures, percentages = [], []
 
