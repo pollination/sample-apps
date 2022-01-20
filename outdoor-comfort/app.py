@@ -12,7 +12,6 @@ from ladybug.color import Colorset
 from ladybug.datacollection import HourlyContinuousCollection
 from ladybug.analysisperiod import AnalysisPeriod
 from ladybug_comfort.collection.utci import UTCI
-from ladybug_comfort.parameter.utci import UTCIParameter
 
 
 # make it look good by setting up the title, icon, etc.
@@ -156,7 +155,6 @@ def main():
     # plotting figures with titles
     def plot_figure_with_title(hourly_data: HourlyContinuousCollection,
                                scenario: str,
-                               chart_title: str,
                                percent_comfortable: float,
                                analysis_period: AnalysisPeriod = None,
                                conditional_statement: str = None,
@@ -170,7 +168,7 @@ def main():
 
         with col1:
 
-            title = f'{chart_title} {scenario}'
+            title = f'{scenario}'
             if analysis_period:
                 hourly_data = hourly_data.filter_by_analysis_period(analysis_period)
             if conditional_statement:
@@ -225,26 +223,8 @@ def main():
                     ' energy balance model to give a temperature value that is indicative of the'
                     ' heat stress or cold stress felt by a human body outdoors')
 
-        st.markdown(
-            """
-            Typically, 
-        -  A UTCI between 9 and 26 degrees Celsius indicates no thermal stress or comfortable conditions outdoors.
-
-        -  A UTCI between 26 and 28 degrees Celsius indicates slight heat stress(comfortable for short periods of time).
-
-        -  Between 28 and 32 degrees, UTCI indicates moderate heat stress(hot but not dangerous).
-
-        -  Between 32 and 38 degrees, UTCI indicates strong heat stress(dangerous beyond short periods of time).
-
-        -  Above 38, UTCI indicates very strong to extreme heat stress(very dangerous).
-        """
-        )
-
-        st.markdown('The app will soon provide controls to edit these parameters.')
-
-        st.subheader(f'UTCI for {epw.location.city}')
-
         if anlysis_type == 'utci':
+            st.subheader(f'UTCI in Celsius for {epw.location.city}')
             # get min and max of first hourly data and apply it to all to keep
             # consistent legend for comparison
             min = comf_objs[0].universal_thermal_climate_index.min
@@ -252,16 +232,22 @@ def main():
             # TODO add legend labels as per number of labels
             for count, obj in enumerate(comf_objs):
                 plot_figure_with_title(obj.universal_thermal_climate_index,
-                                       title_scenario[count], 'UTCI',
+                                       title_scenario[count],
                                        obj.percent_comfortable,
                                        analysis_period=lb_ap,
                                        conditional_statement=conditional_statement,
                                        min_range=min, max_range=max, colors=colorset)
 
         elif anlysis_type == 'comfort':
+            st.subheader(f'Comfortable or not for {epw.location.city}')
+            st.markdown(
+                """
+                -   0 = Uncomfortable (thermal stress)
+                -   1 = Comfortable (no thermal stress)
+                """)
             for count, obj in enumerate(comf_objs):
                 plot_figure_with_title(obj.is_comfortable,
-                                       title_scenario[count], 'Comfortable or not',
+                                       title_scenario[count],
                                        obj.percent_comfortable,
                                        analysis_period=lb_ap,
                                        conditional_statement=conditional_statement,
@@ -269,9 +255,16 @@ def main():
                                        num_labels=2, labels=[0, 1], colors=colorset)
 
         elif anlysis_type == 'condition':
+            st.subheader(f'Comfort conditions for {epw.location.city}')
+            st.markdown(
+                """
+                -   -1 = Cold
+                -    0 = Neutral
+                -   +1 = Hot
+                """)
             for count, obj in enumerate(comf_objs):
                 plot_figure_with_title(obj.thermal_condition,
-                                       title_scenario[count], 'Comfort conditions',
+                                       title_scenario[count],
                                        obj.percent_comfortable,
                                        analysis_period=lb_ap,
                                        conditional_statement=conditional_statement,
@@ -279,9 +272,24 @@ def main():
                                        num_labels=3, labels=[-1, 0, 1], colors=colorset)
 
         elif anlysis_type == 'category':
+            st.subheader(f'Comfort categories for {epw.location.city}')
+            st.markdown(
+                """
+                -   -5 = Extreme Cold Stress       (UTCI < -40)
+                -   -4 = Very Strong Cold Stress   (-40 <= UTCI < -27)
+                -   -3 = Strong Cold Stress        (-27 <= UTCI < -13)
+                -   -2 = Moderate Cold Stress      (-12 <= UTCI < 0)
+                -   -1 = Slight Cold Stress        (0 <= UTCI < 9)
+                -    0 = No Thermal Stress         (9 <= UTCI < 26)
+                -   +1 = Slight Heat Stress        (26 <= UTCI < 28)
+                -   +2 = Moderate Heat Stress      (28 <= UTCI < 32)
+                -   +3 = Strong Heat Stress        (32 <= UTCI < 38)
+                -   +4 = Very Strong Heat Stress   (38 <= UTCI < 46)
+                -   +5 = Extreme Heat Stress       (46 < UTCI)
+                """)
             for count, obj in enumerate(comf_objs):
                 plot_figure_with_title(obj.thermal_condition_eleven_point,
-                                       title_scenario[count], 'Comfort categories',
+                                       title_scenario[count],
                                        obj.percent_comfortable,
                                        analysis_period=lb_ap,
                                        conditional_statement=conditional_statement,
