@@ -1,7 +1,5 @@
 import streamlit as st
 from dragonfly.room2d import Room2D
-from dragonfly.model import Model as dgModel
-from dragonfly.building import Building
 from ladybug_geometry.geometry2d import Point2D
 from honeybee.boundarycondition import Outdoors
 from honeybee.orientation import (angles_from_num_orient, 
