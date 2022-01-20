@@ -1,6 +1,6 @@
 import json
+import pathlib
 import math
-import pandas as pd
 import pydeck as pdk
 import requests
 import streamlit as st
@@ -18,6 +18,35 @@ def deg2num(lat_deg, lon_deg, zoom):
 
 query = st.experimental_get_query_params()
 platform = query['__platform__'][0] if '__platform__' in query else 'web'
+
+
+@st.cache(suppress_st_warning=True)
+def load_context(lat, lon, zoom):
+    x, y = deg2num(lat, lon, zoom)
+    DATA_URL = f"https://data.osmbuildings.org/0.2/anonymous/tile/{zoom}/{x}/{y}.json"
+
+    text_content, lbt_text_content = None, None
+    out_city = f"./data/{lat}_{lon}_{zoom}.json"
+    out_lbt_city = f"./data/lbt_{lat}_{lon}_{zoom}.json"
+    pathlib.Path('./data').mkdir(parents=True, exist_ok=True)
+    try:
+        req = requests.get(DATA_URL)
+        with open(out_city, "w") as f:
+            text_content = json.dumps(req.json())
+    except requests.exceptions.RequestException as e:
+        st.error(f"{e}")
+    except Exception as e:
+        st.error("Geojson not found.")
+
+    json_out = None
+    try:
+        json_out = get_json_array(req.json(), lat, lon)
+        with open(out_lbt_city, "w") as f:
+            lbt_text_content = json_out
+    except Exception as e:
+        st.error("Convert to LBT failed.")
+    return DATA_URL, text_content, lbt_text_content, out_city, out_lbt_city, json_out
+
 
 cities = {
     'New York': [40.7495292, -73.9928448],
@@ -51,29 +80,7 @@ zoom = st.number_input(
     value=15,
     step=1)
 
-x, y = deg2num(lat, lon, zoom)
-DATA_URL = f"https://data.osmbuildings.org/0.2/anonymous/tile/{zoom}/{x}/{y}.json"
-print(DATA_URL)
-print(lat, lon)
-
-text_content, lbt_text_content = None, None
-out_city, out_lbt_city = "city.json", "lbt_city.json"
-try:
-    req = requests.get(DATA_URL)
-    with open(out_city, "w") as f:
-        text_content = json.dumps(req.json())
-except requests.exceptions.RequestException as e:
-    st.error(f"{e}")
-except Exception as e:
-    st.error("Geojson not found.")
-
-json_out = None
-try:
-    json_out = get_json_array(req.json(), lat, lon)
-    with open(out_lbt_city, "w") as f:
-        lbt_text_content = json_out
-except Exception as e:
-    st.error("Convert to LBT failed.")
+DATA_URL, text_content, lbt_text_content, out_city, out_lbt_city, json_out = load_context(lat, lon, zoom)
 
 if text_content:
     st.download_button(
