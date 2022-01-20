@@ -1,9 +1,11 @@
 """Pollination outdoor comfort app."""
 
 import pathlib
-
 import streamlit as st
+import shutil
+import base64
 
+from fpdf import FPDF as PDF
 from plotly.graph_objects import Figure
 from typing import List
 
@@ -162,15 +164,19 @@ def main():
                                max_range: float = None,
                                num_labels: int = None,
                                labels: List[float] = None,
-                               colors=colorset) -> None:
+                               colors=colorset) -> Figure:
         """Plot figure."""
         col1, col2 = st.columns([5, 1])
 
         with col1:
 
+            # figure title
             title = f'{scenario}'
+            titles.append(title)
+
             if analysis_period:
                 hourly_data = hourly_data.filter_by_analysis_period(analysis_period)
+
             if conditional_statement:
                 try:
                     hourly_data = hourly_data.filter_by_conditional_statement(
@@ -178,10 +184,12 @@ def main():
                 except AssertionError:
                     st.error('No values found for that conditional statement.')
                     return
+
             figure = hourly_data.heat_map(title=title, show_title=True,
                                           colors=colors, min_range=min_range,
                                           max_range=max_range, num_labels=num_labels,
                                           labels=labels)
+            figures.append(figure)
             st.plotly_chart(figure, use_container_width=True)
 
         with col2:
@@ -205,23 +213,29 @@ def main():
         3: ' with the effect of sun ☀️ and wind 💨'
     }
 
+    figures, titles = [], []
     # Main page
     with st.container():
 
-        st.markdown('### Outdoor-comfort')
+        # Creating face columns to display button at the center
+        col1 = st.columns(3)[1]
+        with col1:
+            st.header('Outdoor-comfort')
+
         # page header
         st.markdown('Use this app to calculate the Universal Thermal Climate Index (UTCI)'
                     ' for a set of input climate conditions. Perhaps the most familiar'
-                    ' application of Universal Thermal Climate Index(UTCI) is the temperature'
-                    ' given by TV weathermen and women when they say that, "even though the'
-                    ' dry bulb temperature outside is a certain value, the temperature actually'
-                    ' "feels like" something higher or lower.')
+                    ' application of Universal Thermal Climate Index(UTCI) is the'
+                    ' temperature given by TV weathermen and women when they say that,'
+                    ' "even though the dry bulb temperature outside is a certain value,'
+                    ' the temperature actually "feels like" something higher or lower.')
 
         st.markdown('UTCI is this temperature of what the weather "feels like" and it'
-                    ' takes into account the radiant temperature(sometimes including solar radiation)'
-                    ', relative humidity, and wind speed.  UTCI uses these variables in a human'
-                    ' energy balance model to give a temperature value that is indicative of the'
-                    ' heat stress or cold stress felt by a human body outdoors')
+                    ' takes into account the radiant temperature(sometimes including'
+                    ' solar radiation) , relative humidity, and wind speed.'
+                    ' UTCI uses these variables in a human energy balance model to'
+                    ' give a temperature value that is indicative of the heat stress'
+                    ' or cold stress felt by a human body outdoors')
 
         if anlysis_type == 'utci':
             st.subheader(f'UTCI in Celsius for {epw.location.city}')
@@ -297,6 +311,60 @@ def main():
                                        num_labels=11,
                                        labels=[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5],
                                        colors=colorset)
+
+    ####################################################################################
+    # PDF export
+    ####################################################################################
+
+    def create_download_link(val, filename):
+        b64 = base64.b64encode(val)  # val looks like b'...'
+        return '<a style="display:block; text-align: left" '\
+            f' href="data:application/octet-stream;base64,{b64.decode()}" '\
+            f' download="{filename}.pdf">Download PDF</a>'
+
+    def write_pdf(col):
+        # Create a folder to write images
+        # nuke the images folder if exists
+        path = pathlib.Path('./assets/figures')
+        if path.is_dir():
+            shutil.rmtree(path)
+        # create a new folder to download the image
+        path.mkdir(parents=True, exist_ok=True)
+
+        # instantiate the report
+        pdf = PDF(orientation='L', unit='mm', format='A4')
+
+        # image type
+        image_format = 'jpg'
+        # container width & height
+
+        # A little less than the width of A4 paper in mm
+        container_width = 280
+
+        # add front page
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 20)
+        pdf.cell(container_width, 170, epw.location.city, align='C')
+
+        # add other charts
+        for count, figure in enumerate(figures):
+            pdf.add_page()
+            pdf.set_font('Arial', 'B', 16)
+            # pdf.cell(container_width, 10, header, align='C')
+            image_path = path.joinpath(str(count) + '.' + image_format)
+            figure.write_image(image_path, format=image_format, scale=4)
+            pdf.image(image_path.as_posix(), x=10, y=20,
+                      w=container_width)
+
+        html = create_download_link(pdf.output(dest="S").encode("latin-1"), "test")
+        with col:
+            st.markdown(html, unsafe_allow_html=True)
+
+    col2 = st.columns(3)[1]
+    with col2:
+        export_as_pdf = st.button("Export Report")
+    if export_as_pdf:
+        write_pdf(col2)
 
 
 if __name__ == '__main__':
