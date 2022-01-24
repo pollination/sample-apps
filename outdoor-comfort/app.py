@@ -447,11 +447,15 @@ def main():
             # set black font color for the text on the image since fpdf does not
             # support setting text color
             figure.update_layout(
-                font=dict(color='#000000')
+                font=dict(color='#000000', size=7)
             )
+
             figure.write_image(image_path, format=image_format,
                                width=500, height=250, scale=3)
-            pdf.image(image_path.as_posix(), x=(297/2 - 150/2), y=60, w=150, h=75)
+
+            pdf.image(image_path.as_posix(), x=(297/2 - container_width/2),
+                      y=60, w=container_width, h=container_width/2)
+
             pdf.cell(w=container_width, h=50,
                      txt=percentages[count], align='C')
 
