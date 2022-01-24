@@ -2,5 +2,5 @@ pollination-streamlit>=0.1.1
 streamlit-vtkjs
 ladybug-pandas>=0.4.0
 ladybug-charts>=1.15.7
-fpdf>=1.7.2
+fpdf2>=2.5.0
 kaleido>=0.2.1
