@@ -459,8 +459,7 @@ def main():
             pdf.cell(w=container_width, h=50,
                      txt=percentages[count], align='C')
 
-        html = create_download_link(pdf.output(
-            dest="S").encode("latin-1"), f'Outdoor comfort_{epw.location.city}')
+        html = create_download_link(pdf.output(), f'Outdoor comfort_{epw.location.city}')
         with col:
             st.markdown(html, unsafe_allow_html=True)
 
