@@ -27,6 +27,14 @@ st.sidebar.image(
     use_column_width=True
 )
 
+# helper hash functions
+
+
+def epw_hash_func(epw): return epw.location.city
+def sunpath_hash_func(sp): return sp.latitude, sp.longitude, sp.north_angle
+def hourly_data_hash_func(data): return data.header.data_type
+
+
 # create the control panel
 with st.sidebar:
 
@@ -136,9 +144,13 @@ st.markdown(header_text)
 st_vtkjs(result[0].read_bytes(), menu=menu, key='viewer')
 
 # generate a csv file
-write_csv = st.checkbox('Generate CSV', value=False)
+col2 = st.columns(3)[1]
+with col2:
+    write_csv = st.checkbox('Generate CSV', value=False)
 
 
+@st.cache(allow_output_mutation=True, hash_funcs={Sunpath: sunpath_hash_func, EPW: epw_hash_func,
+                                                  HourlyContinuousCollection: hourly_data_hash_func})
 def write_csv_file(sunpath: Sunpath, epw: EPW = None,
                    data: List[HourlyContinuousCollection] = None) -> str:
     filename = './data/sunpath.csv'
@@ -184,8 +196,9 @@ if write_csv:
             csv_file_path = write_csv_file(result[1], epw)
     else:
         csv_file_path = write_csv_file(result[1])
-    with open(csv_file_path, 'r') as f:
-        st.download_button('Download CSV', f, file_name='sunpath.csv')
+    with col2:
+        with open(csv_file_path, 'r') as f:
+            st.download_button('Download CSV', f, file_name='sunpath.csv')
 
 # rhino integration
 
