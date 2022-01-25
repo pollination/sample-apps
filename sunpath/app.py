@@ -144,9 +144,9 @@ st.markdown(header_text)
 st_vtkjs(result[0].read_bytes(), menu=menu, key='viewer')
 
 # generate a csv file
-col2 = st.columns(3)[1]
+col2 = st.columns(5)[2]
 with col2:
-    write_csv = st.checkbox('Generate CSV', value=False)
+    write_csv = st.checkbox('CSV', value=False)
 
 
 @st.cache(allow_output_mutation=True, hash_funcs={Sunpath: sunpath_hash_func, EPW: epw_hash_func,
