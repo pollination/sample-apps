@@ -457,7 +457,8 @@ def main():
             # set black font color for the text on the image since fpdf does not
             # support setting text color
             figure.update_layout(
-                font=dict(color='#000000', size=7)
+                font=dict(color='#000000', size=7),
+                title=dict(font=dict(color='#000000', size=7), pad=dict(b=0))
             )
 
             figure.write_image(image_path, format=image_format,
