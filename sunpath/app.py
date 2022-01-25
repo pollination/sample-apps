@@ -225,32 +225,32 @@ if platform == 'Rhino':
 
     # create the compass
     co = Compass(radius=radius,
-        north_angle=north,
-        spacing_factor=0.15)
+                 north_angle=north,
+                 spacing_factor=0.15)
 
     with col1:
         # analemma
-        col = st.color_picker('Analemma Color', '#000000', 
-            key='poly-col').lstrip('#')
+        col = st.color_picker('Analemma Color', '#000000',
+                              key='poly-col').lstrip('#')
         polylines = sun_path.hourly_analemma_polyline3d(radius=radius)
         polylines_dicts = get_colored_geometry_json_strings(polylines, col)
 
         # arcs
-        col = st.color_picker('Arcs Color', '#bcbec0', 
-            key='arc-col').lstrip('#')
+        col = st.color_picker('Arcs Color', '#bcbec0',
+                              key='arc-col').lstrip('#')
         arcs = sun_path.monthly_day_arc3d(radius=radius)
         arcs_dicts = get_colored_geometry_json_strings(arcs, col)
 
     with col2:
         # circles
-        col = st.color_picker('Circles Color', '#eb2126', 
-            key='circl-col').lstrip('#')
+        col = st.color_picker('Circles Color', '#eb2126',
+                              key='circl-col').lstrip('#')
         circles = co.all_boundary_circles
         circles_dicts = get_colored_geometry_json_strings(circles, col)
 
         # ticks
-        col = st.color_picker('Ticks Color', '#2ea8e0', 
-            key='tick-col').lstrip('#')
+        col = st.color_picker('Ticks Color', '#2ea8e0',
+                              key='tick-col').lstrip('#')
         major_ticks = co.major_azimuth_ticks
         minor_ticks = co.minor_azimuth_ticks
         ticks = major_ticks + minor_ticks
@@ -258,15 +258,15 @@ if platform == 'Rhino':
 
     with col3:
         # altitude circles
-        col = st.color_picker('Circle Color', '#05a64f', 
-            key='tick-col').lstrip('#')
+        col = st.color_picker('Circle Color', '#05a64f',
+                              key='tick-col').lstrip('#')
         altitude_circ = co.stereographic_altitude_circles
         altitude_circ_dicts = get_colored_geometry_json_strings(altitude_circ, col)
 
         # suns
         points = []
-        col = st.color_picker('Sun Color', '#f2b24d', 
-            key='sun-col').lstrip('#')
+        col = st.color_picker('Sun Color', '#f2b24d',
+                              key='sun-col').lstrip('#')
         hourly_suns = sun_path.hourly_analemma_suns()
         for suns in hourly_suns:
             for sun in suns:
