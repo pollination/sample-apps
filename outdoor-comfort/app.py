@@ -192,7 +192,17 @@ def main():
                                           max_range=max_range, num_labels=num_labels,
                                           labels=labels)
 
-            st.plotly_chart(figure, use_container_width=True)
+            config = {
+                'toImageButtonOptions': {
+                    'format': 'svg',  # one of png, svg, jpeg, webp
+                    'filename': title,
+                    'height': 350,
+                    'width': 700,
+                    'scale': 1  # Multiply title/legend/axis/canvas sizes by this factor
+                }
+            }
+
+            st.plotly_chart(figure, use_container_width=True, config=config)
             figures.append(figure)
 
         with col2:
