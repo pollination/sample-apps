@@ -55,11 +55,9 @@ def main():
                 for var in fields.keys():
                     selection.append(st.checkbox(var, value=False))
 
+            menu = st.checkbox('Show viewer controls', value=False)
+            st.markdown('----')
             st.form_submit_button('Run')
-
-        st.markdown('----')
-
-        menu = st.checkbox('Show viewer controls', value=False)
 
     # Main page
     with st.container():
