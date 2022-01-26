@@ -183,10 +183,9 @@ def main():
         col2 = st.columns(3)[1]
         with col2:
             export_as_pdf = st.button("Export Report")
-        if export_as_pdf:
-            html = write_pdf(epw, intro_1, intro_2, lb_ap, conditional_statement,
-                             analysis_type, scenario, figures, result_txts)
-            with col2:
+            if export_as_pdf:
+                html = write_pdf(epw, intro_1, intro_2, lb_ap, conditional_statement,
+                                 analysis_type, scenario, figures, result_txts)
                 st.markdown(html, unsafe_allow_html=True)
 
 
