@@ -28,34 +28,31 @@ def main():
     # control panel
     with st.sidebar:
 
-        with st.form('Parameters'):
-            latitude = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
-            longitude = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
-            north = st.slider('North', -180, 180, 0, 1)
-            projection = st.slider('Projection', 2, 3, value=3,
-                                   help='Choose between 2D and 3D.')
+        latitude = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
+        longitude = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
+        north = st.slider('North', -180, 180, 0, 1)
+        projection = st.slider('Projection', 2, 3, value=3,
+                               help='Choose between 2D and 3D.')
 
-            # load EPW
-            with st.expander('Sunpath for EPW'):
-                epw_data = st.file_uploader('Load EPW', type='epw')
-                # if epw file is uploaded, load it
-                if epw_data:
-                    epw_file = pathlib.Path('./data/sample.epw')
-                    epw_file.parent.mkdir(parents=True, exist_ok=True)
-                    epw_file.write_bytes(epw_data.read())
-                    epw = EPW(epw_file)
-                else:
-                    epw = None
+        # load EPW
+        with st.expander('Sunpath for EPW'):
+            epw_data = st.file_uploader('Load EPW', type='epw')
+            # if epw file is uploaded, load it
+            if epw_data:
+                epw_file = pathlib.Path('./data/sample.epw')
+                epw_file.parent.mkdir(parents=True, exist_ok=True)
+                epw_file.write_bytes(epw_data.read())
+                epw = EPW(epw_file)
+            else:
+                epw = None
 
-            # select data from EPW to mount on Sunpath
-            fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
-            with st.expander('Load data on sunpath'):
-                st.text('*Load EPW first*')
-                selection = []
-                for var in fields.keys():
-                    selection.append(st.checkbox(var, value=False))
-
-            st.form_submit_button('Run')
+        # select data from EPW to mount on Sunpath
+        fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
+        with st.expander('Load data on sunpath'):
+            st.text('*Load EPW first*')
+            selection = []
+            for var in fields.keys():
+                selection.append(st.checkbox(var, value=False))
 
         st.markdown('----')
 
