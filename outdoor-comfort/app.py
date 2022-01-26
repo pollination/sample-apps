@@ -26,32 +26,36 @@ st.sidebar.image(
 def main():
 
     with st.sidebar:
-        # epw file
-        with st.expander('Upload an EPW file'):
-            epw_data = st.file_uploader('', type='epw')
-            if epw_data:
-                epw_file = pathlib.Path('./data/sample.epw')
-                epw_file.parent.mkdir(parents=True, exist_ok=True)
-                epw_file.write_bytes(epw_data.read())
-            else:
-                epw_file = './assets/sample.epw'
 
-            epw = EPW(epw_file)
+        with st.form('Parameters'):
+            # epw file
+            with st.expander('Upload an EPW file'):
+                epw_data = st.file_uploader('', type='epw')
+                if epw_data:
+                    epw_file = pathlib.Path('./data/sample.epw')
+                    epw_file.parent.mkdir(parents=True, exist_ok=True)
+                    epw_file.write_bytes(epw_data.read())
+                else:
+                    epw_file = './assets/sample.epw'
 
-        # analysis period
-        with st.expander('Apply analysis period'):
+                epw = EPW(epw_file)
 
-            # switch between 'default' and 'custom'
-            analysis_period = st.radio('Select default analysis period',
-                                       options=['Default', 'Custom'])
-            if analysis_period == 'Custom':
+            # analysis period
+            with st.expander('Apply analysis period'):
+
+                # switch between 'default' and 'custom'
+                # analysis_period = st.radio('Select default analysis period',
+                #                            options=['Default', 'Custom'])
+                # if analysis_period == 'Custom':
                 st_month = st.number_input(
                     'Start month', min_value=1, max_value=12, value=1)
                 end_month = st.number_input(
                     'End month', min_value=1, max_value=12, value=12)
 
-                st_day = st.number_input('Start day', min_value=1, max_value=31, value=1)
-                end_day = st.number_input('End day', min_value=1, max_value=31, value=31)
+                st_day = st.number_input(
+                    'Start day', min_value=1, max_value=31, value=1)
+                end_day = st.number_input(
+                    'End day', min_value=1, max_value=31, value=31)
 
                 st_hour = st.number_input(
                     'Start hour', min_value=0, max_value=23, value=0)
@@ -60,73 +64,75 @@ def main():
 
                 lb_ap = AnalysisPeriod(st_month, st_day, st_hour,
                                        end_month, end_day, end_hour)
-            else:
-                lb_ap = None
+                # else:
+                #     lb_ap = None
 
-        # conditional statement
-        with st.expander('Apply conditional statement'):
-            conditional_statement = st.text_input('')
+            # conditional statement
+            with st.expander('Apply conditional statement'):
+                conditional_statement = st.text_input('')
 
-        # choose colorset
-        with st.expander('Apply colorset'):
-            colorsets = {
-                'original': Colorset.original(),
-                'nuanced': Colorset.nuanced(),
-                'annual_comfort': Colorset.annual_comfort(),
-                'benefit': Colorset.benefit(),
-                'benefit_harm': Colorset.benefit_harm(),
-                'black_to_white': Colorset.black_to_white(),
-                'blue_green_red': Colorset.blue_green_red(),
-                'cloud_cover': Colorset.cloud_cover(),
-                'cold_sensation': Colorset.cold_sensation(),
-                'ecotect': Colorset.ecotect(),
-                'energy_balance': Colorset.energy_balance(),
-                'energy_balance_storage': Colorset.energy_balance_storage(),
-                'glare_study': Colorset.glare_study(),
-                'harm': Colorset.harm(),
-                'heat_sensation': Colorset.heat_sensation(),
-                'multi_colored': Colorset.multi_colored(),
-                'multicolored_2': Colorset.multicolored_2(),
-                'multicolored_3': Colorset.multicolored_3(),
-                'openstudio_palette': Colorset.openstudio_palette(),
-                'peak_load_balance': Colorset.peak_load_balance(),
-                'shade_benefit': Colorset.shade_benefit(),
-                'shade_benefit_harm': Colorset.shade_benefit_harm(),
-                'shade_harm': Colorset.shade_harm(),
-                'shadow_study': Colorset.shadow_study(),
-                'therm': Colorset.therm(),
-                'thermal_comfort': Colorset.thermal_comfort(),
-                'view_study': Colorset.view_study()
-            }
+            # choose colorset
+            with st.expander('Apply colorset'):
+                colorsets = {
+                    'original': Colorset.original(),
+                    'nuanced': Colorset.nuanced(),
+                    'annual_comfort': Colorset.annual_comfort(),
+                    'benefit': Colorset.benefit(),
+                    'benefit_harm': Colorset.benefit_harm(),
+                    'black_to_white': Colorset.black_to_white(),
+                    'blue_green_red': Colorset.blue_green_red(),
+                    'cloud_cover': Colorset.cloud_cover(),
+                    'cold_sensation': Colorset.cold_sensation(),
+                    'ecotect': Colorset.ecotect(),
+                    'energy_balance': Colorset.energy_balance(),
+                    'energy_balance_storage': Colorset.energy_balance_storage(),
+                    'glare_study': Colorset.glare_study(),
+                    'harm': Colorset.harm(),
+                    'heat_sensation': Colorset.heat_sensation(),
+                    'multi_colored': Colorset.multi_colored(),
+                    'multicolored_2': Colorset.multicolored_2(),
+                    'multicolored_3': Colorset.multicolored_3(),
+                    'openstudio_palette': Colorset.openstudio_palette(),
+                    'peak_load_balance': Colorset.peak_load_balance(),
+                    'shade_benefit': Colorset.shade_benefit(),
+                    'shade_benefit_harm': Colorset.shade_benefit_harm(),
+                    'shade_harm': Colorset.shade_harm(),
+                    'shadow_study': Colorset.shadow_study(),
+                    'therm': Colorset.therm(),
+                    'thermal_comfort': Colorset.thermal_comfort(),
+                    'view_study': Colorset.view_study()
+                }
 
-            selected_colorset = st.selectbox('', list(colorsets.keys()))
-            colorset = colorsets[selected_colorset]
+                selected_colorset = st.selectbox('', list(colorsets.keys()))
+                colorset = colorsets[selected_colorset]
 
-        # analysis type
-        analysis_type = st.radio('Analysis type', options=[
-            'UTCI', 'Comfortable or not', 'Comfort conditions', 'Comfort categories'])
+            # analysis type
+            analysis_type = st.radio('Analysis type', options=[
+                'UTCI', 'Comfortable or not', 'Comfort conditions', 'Comfort categories'])
 
-        # scenarios
-        wind_help = 'Select "Add wind" to include the EPW wind speed in the calculation.'\
-            ' Not selecting this will assume a condition that is shielded from wind'\
-            ' where the human subject experiences a low wind speed of 0.5 m/s, which'\
-            ' is the lowest input speed that is recommended for the UTCI model. \n'\
+            # scenarios
+            wind_help = 'Select "Add wind" to include the EPW wind speed in the calculation.'\
+                ' Not selecting this will assume a condition that is shielded from wind'\
+                ' where the human subject experiences a low wind speed of 0.5 m/s, which'\
+                ' is the lowest input speed that is recommended for the UTCI model. \n'\
 
 
-        sun_help = 'Select "Add sun" to include the mean radiant temperature (MRT)'\
-            ' delta from both shortwave solar falling directly on people and long wave'\
-            ' radiant exchange with the sky. Not checking this will assume a shaded'\
-            ' condition with MRT being equal to the EPW dry bulb temperature.'\
-            ' When checked, this calculation will assume no surrounding shade context,'\
-            ' standing human geometry, and a solar horizontal angle relative to front'\
-            ' of person (SHARP) of 135 degrees. A SHARP of 135 essentially assumes that'\
-            ' a person typically faces their side or back to the sun to avoid glare. \n'
+            sun_help = 'Select "Add sun" to include the mean radiant temperature (MRT)'\
+                ' delta from both shortwave solar falling directly on people and long wave'\
+                ' radiant exchange with the sky. Not checking this will assume a shaded'\
+                ' condition with MRT being equal to the EPW dry bulb temperature.'\
+                ' When checked, this calculation will assume no surrounding shade context,'\
+                ' standing human geometry, and a solar horizontal angle relative to front'\
+                ' of person (SHARP) of 135 degrees. A SHARP of 135 essentially assumes that'\
+                ' a person typically faces their side or back to the sun to avoid glare. \n'
 
-        win_sun_help = 'Select "Add wind & sun" to include both.'
+            win_sun_help = 'Select "Add wind & sun" to include both.'
 
-        scenario = st.radio('Scenarios', options=['No wind & sun', 'Add wind', 'Add sun',
-                                                  'Add wind & sun'],
-                            help=wind_help + '\n' + sun_help + '\n' + win_sun_help)
+            scenario = st.radio('Scenarios', options=['No wind & sun', 'Add wind', 'Add sun',
+                                                      'Add wind & sun'],
+                                help=wind_help + '\n' + sun_help + '\n' + win_sun_help)
+
+            st.form_submit_button('Submit')
 
     with st.container():
 
