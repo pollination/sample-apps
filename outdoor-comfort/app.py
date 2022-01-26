@@ -132,7 +132,8 @@ def main():
                                                       'Add wind & sun'],
                                 help=wind_help + '\n' + sun_help + '\n' + win_sun_help)
 
-            st.form_submit_button('Submit')
+            st.markdown('---')
+            st.form_submit_button('Run')
 
     with st.container():
 
