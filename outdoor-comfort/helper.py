@@ -31,6 +31,11 @@ def color_hash_func(color: Color) -> Tuple[float, float, float]:
     return color.r, color.g, color.b
 
 
+def analysis_period_hash_func(ap: AnalysisPeriod) -> str:
+    """Function to help streamlit hash an AnalysisPeriod object."""
+    return ap.st_month, ap.st_day, ap.st_hour, ap.end_month, ap.end_day, ap.end_hour
+
+
 def get_figure_config(title: str) -> dict:
     """Set figure config so that a figure can be downloaded as SVG."""
 
@@ -222,7 +227,9 @@ def get_legend_info(analysis_type: str) -> str:
 
 
 @ st.cache(
-    allow_output_mutation=True, hash_funcs={UTCI: utci_hash_func, Color: color_hash_func})
+    allow_output_mutation=True, hash_funcs={
+        UTCI: utci_hash_func, Color: color_hash_func,
+        AnalysisPeriod: analysis_period_hash_func})
 def get_data(analysis_type: str, comf_objs: List[UTCI],
              title_scenario: Dict[int, str], lb_ap,
              conditional_statement: str,
