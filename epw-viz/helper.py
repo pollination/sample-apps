@@ -143,7 +143,20 @@ def get_hourly_data_figure(data: HourlyContinuousCollection, global_colorset: st
 @st.cache(hash_funcs={EPW: epw_hash_func, Color: color_hash_func})
 def get_bar_chart_figure(fields: dict, epw: EPW, selection: List[str], data_type: str,
                          switch: bool, stack: bool, global_colorset: str) -> Figure:
+    """Create bar chart figure.
 
+    Args:
+        fields: A dictionary of EPW variable name to its corresponding field number.
+        epw: An EPW object.
+        selection: A list of strings representing the names of the fields to be plotted.
+        data_type: A string representing the data type of the data to be plotted.
+        switch: A boolean to indicate whether to reverse the colorset.
+        stack: A boolean to indicate whether to stack the bars.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A plotly figure.
+    """
     if switch:
         colors = list(colorsets[global_colorset])
         colors.reverse()
