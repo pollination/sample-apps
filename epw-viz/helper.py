@@ -216,3 +216,27 @@ def get_hourly_line_chart_figure(data: HourlyContinuousCollection,
         colors = colorsets[global_colorset]
 
     return data.line_chart(color=colors[-1])
+
+
+@st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
+                      Color: color_hash_func}, allow_output_mutation=True)
+def get_per_hour_line_chart_figure(data: HourlyContinuousCollection,
+                                   switch: bool, global_colorset: str) -> Figure:
+    """Create per hour line chart figure.
+
+    Args:
+        data: An HourlyContinuousCollection object.
+        switch: A boolean to indicate whether to reverse the colorset.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A plotly figure.
+    """
+    if switch:
+        colors = list(colorsets[global_colorset])
+        colors.reverse()
+    else:
+        colors = colorsets[global_colorset]
+
+    return data.per_hour_line_chart(title=data.header.unit, show_title=True,
+                                    color=colors[-1])

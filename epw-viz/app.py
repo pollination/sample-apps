@@ -22,7 +22,8 @@ from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
 from ladybug_charts.utils import Strategy
 
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
-    get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config
+    get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config,\
+    get_per_hour_line_chart_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -126,6 +127,18 @@ def main():
             hourly_line_chart_switch = st.checkbox('Switch colors', key='line_chart_switch',
                                                    help='Reverse the colorset')
 
+        # Per hour line chart ##########################################################
+        with st.expander('Per hour line chart'):
+
+            per_hour_line_chart_selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), index=8,
+                key='per_hour_chart')
+            per_hour_line_chart_data = epw._get_data_by_field(
+                fields[per_hour_line_chart_selected])
+
+            per_hour_line_chart_switch = st.checkbox('Switch colors', key='per_hour_chart_switch',
+                                                     help='Reverse the colorset')
+
     ####################################################################################
     # Main page
     ####################################################################################
@@ -220,6 +233,21 @@ def main():
 
             st.plotly_chart(hourly_line_chart_figure, use_container_width=True,
                             config=get_figure_config(f'{hourly_line_chart_selected}'))
+
+        # Per hour line chart ##########################################################
+        with st.container():
+            st.header('Per hour line chart')
+            st.markdown(
+                'Select an environmental variable from the EPW weatherfile to visualize on a'
+                ' per hour line chart. By default, the hourly data is set to "Direct normal'
+                ' radiation".')
+
+            per_hour_line_chart_figure = get_per_hour_line_chart_figure(
+                per_hour_line_chart_data, per_hour_line_chart_switch, global_colorset)
+
+            st.plotly_chart(per_hour_line_chart_figure, use_container_width=True,
+                            config=get_figure_config(
+                                f'{per_hour_line_chart_data.header.unit}'))
 
 
 if __name__ == '__main__':
