@@ -52,9 +52,9 @@ def main():
 
         # Hourly data ##################################################################
         with st.expander('Hourly data'):
-            selected = st.selectbox(
+            hourly_selected = st.selectbox(
                 'Select an environmental variable', options=fields.keys(), key='hourly_data')
-            hourly_data = global_epw._get_data_by_field(fields[selected])
+            hourly_data = global_epw._get_data_by_field(fields[hourly_selected])
             hourly_data_conditional_statement = st.text_input(
                 'Apply conditional statement')
             hourly_data_min = st.text_input('Min')
