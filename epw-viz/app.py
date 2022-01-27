@@ -100,6 +100,21 @@ def main():
             hourly_data_min = st.text_input('Min')
             hourly_data_max = st.text_input('Max')
 
+            hourly_data_st_month = st.number_input(
+                'Start month', min_value=1, max_value=12, value=1, key='hourly_data_st_month')
+            hourly_data_end_month = st.number_input(
+                'End month', min_value=1, max_value=12, value=12, key='hourly_data_end_month')
+
+            hourly_data_st_day = st.number_input(
+                'Start day', min_value=1, max_value=31, value=1, key='hourly_data_st_day')
+            hourly_data_end_day = st.number_input(
+                'End day', min_value=1, max_value=31, value=31, key='hourly_data_end_day')
+
+            hourly_data_st_hour = st.number_input(
+                'Start hour', min_value=0, max_value=23, value=0, key='hourly_data_st_hour')
+            hourly_data_end_hour = st.number_input(
+                'End hour', min_value=0, max_value=23, value=23, key='hourly_data_end_hour')
+
         # Bar Chart ####################################################################
         with st.expander('Bar Chart'):
 
