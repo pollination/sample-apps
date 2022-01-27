@@ -15,6 +15,7 @@ from ladybug.color import Colorset, Color
 from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
 from ladybug.monthlychart import MonthlyChart
+from ladybug.sunpath import Sunpath
 
 colorsets = {
     'original': Colorset.original(),
@@ -74,6 +75,25 @@ def get_figure_config(title: str) -> dict:
             'scale': 1  # Multiply title/legend/axis/canvas sizes by this factor
         }
     }
+
+
+def get_colors(switch: bool, global_colorset: str) -> List[Color]:
+    """Get switched colorset if requested.
+
+    Args:
+        switch: Boolean to switch colorset.
+        global_colorset: Global colorset to use.
+
+    Returns:
+        List of colors.
+    """
+
+    if switch:
+        colors = list(colorsets[global_colorset])
+        colors.reverse()
+    else:
+        colors = colorsets[global_colorset]
+    return colors
 
 
 @st.cache()
@@ -171,11 +191,7 @@ def get_bar_chart_figure(fields: dict, epw: EPW, selection: List[str], data_type
     Returns:
         A plotly figure.
     """
-    if switch:
-        colors = list(colorsets[global_colorset])
-        colors.reverse()
-    else:
-        colors = colorsets[global_colorset]
+    colors = get_colors(switch, global_colorset)
 
     data = []
     for count, item in enumerate(selection):
@@ -209,12 +225,7 @@ def get_hourly_line_chart_figure(data: HourlyContinuousCollection,
     Returns:
         A plotly figure.
     """
-    if switch:
-        colors = list(colorsets[global_colorset])
-        colors.reverse()
-    else:
-        colors = colorsets[global_colorset]
-
+    colors = get_colors(switch, global_colorset)
     return data.line_chart(color=colors[-1])
 
 
@@ -232,12 +243,7 @@ def get_per_hour_line_chart_figure(data: HourlyContinuousCollection,
     Returns:
         A plotly figure.
     """
-    if switch:
-        colors = list(colorsets[global_colorset])
-        colors.reverse()
-    else:
-        colors = colorsets[global_colorset]
-
+    colors = get_colors(switch, global_colorset)
     return data.per_hour_line_chart(title=data.header.unit, show_title=True,
                                     color=colors[-1])
 
@@ -256,13 +262,56 @@ def get_daily_chart_figure(data: HourlyContinuousCollection, switch: bool,
     Returns:
         A plotly figure.
     """
-    if switch:
-        colors = list(colorsets[global_colorset])
-        colors.reverse()
-    else:
-        colors = colorsets[global_colorset]
-
+    colors = get_colors(switch, global_colorset)
     data = data.average_daily()
 
     return data.bar_chart(color=colors[-1], title=data.header.data_type.name,
                           show_title=True)
+
+
+@st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
+                      Color: color_hash_func, EPW: epw_hash_func}, allow_output_mutation=True)
+def get_sunpath_figure(sunpath_type: str, global_colorset: str, epw: EPW = None,
+                       switch: bool = False, lat_lon: str = '0.0,0.0',
+                       data: HourlyContinuousCollection = None, ) -> Figure:
+    """Create sunpath figure.
+
+    Args:
+        sunpath_type: A string representing the type of sunpath to be plotted.
+        lat_lon: A string representing the latitude and longitude of the location.
+        switch: A boolean to indicate whether to reverse the colorset.
+        epw: An EPW object.
+        load_data: A boolean to indicate whether to load the data.
+        data: Hourly data to load on sunpath.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A plotly figure.
+    """
+    if sunpath_type == 'using lat-lon':
+        lat, lon = lat_lon.split(',')
+        if lat:
+            try:
+                lat = float(lat)
+            except ValueError:
+                st.error('Invalid value for latitude')
+                lat = None
+        if lon:
+            try:
+                lon = float(lon)
+            except ValueError:
+                st.error('Invalid value for longitude')
+                lon = None
+
+        lb_sunpath = Sunpath(lat, lon)
+        colors = get_colors(switch, global_colorset)
+        return lb_sunpath.plot(colorset=colors)
+
+    elif sunpath_type == 'from epw location':
+        lb_sunpath = Sunpath.from_location(epw.location)
+        colors = get_colors(switch, global_colorset)
+        return lb_sunpath.plot(colorset=colors)
+    else:
+        lb_sunpath = Sunpath.from_location(epw.location)
+        colors = colorsets[global_colorset]
+        return lb_sunpath.plot(colorset=colors, data=data)

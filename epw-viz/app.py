@@ -23,7 +23,7 @@ from ladybug_charts.utils import Strategy
 
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
     get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config,\
-    get_per_hour_line_chart_figure, get_daily_chart_figure
+    get_per_hour_line_chart_figure, get_daily_chart_figure, get_sunpath_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -48,7 +48,7 @@ def main():
         fields = get_fields()
 
         # epw file #####################################################################
-        with st.expander('Upload an EPW file'):
+        with st.expander('Upload EPW file'):
             epw_data = st.file_uploader('', type='epw')
             if epw_data:
                 epw_file = pathlib.Path('./data/sample.epw')
@@ -57,7 +57,7 @@ def main():
             else:
                 epw_file = './assets/sample.epw'
 
-            epw = EPW(epw_file)
+            global_epw = EPW(epw_file)
 
         # analysis period ##############################################################
         # with st.expander('Apply analysis period'):
@@ -84,7 +84,7 @@ def main():
         #         lb_ap = None
 
         # Global Colorset ##############################################################
-        with st.expander('Apply global colorset'):
+        with st.expander('Global colorset'):
             global_colorset = st.selectbox('', list(colorsets.keys()))
 
         st.markdown('---')
@@ -93,7 +93,7 @@ def main():
         with st.expander('Hourly data'):
             selected = st.selectbox(
                 'Select an environmental variable', options=fields.keys(), key='hourly_data')
-            hourly_data = epw._get_data_by_field(fields[selected])
+            hourly_data = global_epw._get_data_by_field(fields[selected])
             hourly_data_conditional_statement = st.text_input(
                 'Apply conditional statement')
             hourly_data_min = st.text_input('Min')
@@ -123,7 +123,7 @@ def main():
             hourly_line_chart_selected = st.selectbox(
                 'Select an environmental variable', options=fields.keys(), index=2,
                 key='line_chart')
-            hourly_line_chart_data = epw._get_data_by_field(
+            hourly_line_chart_data = global_epw._get_data_by_field(
                 fields[hourly_line_chart_selected])
 
             hourly_line_chart_switch = st.checkbox('Switch colors', key='line_chart_switch',
@@ -135,7 +135,7 @@ def main():
             per_hour_line_chart_selected = st.selectbox(
                 'Select an environmental variable', options=fields.keys(), index=8,
                 key='per_hour_chart')
-            per_hour_line_chart_data = epw._get_data_by_field(
+            per_hour_line_chart_data = global_epw._get_data_by_field(
                 fields[per_hour_line_chart_selected])
 
             per_hour_line_chart_switch = st.checkbox('Switch colors', key='per_hour_chart_switch',
@@ -147,10 +147,37 @@ def main():
             daily_chart_selected = st.selectbox(
                 'Select an environmental variable', options=fields.keys(), index=16,
                 key='daily_chart')
-            daily_chart_data = epw._get_data_by_field(fields[daily_chart_selected])
+            daily_chart_data = global_epw._get_data_by_field(
+                fields[daily_chart_selected])
 
             daily_chart_switch = st.checkbox('Switch colors', key='daily_chart_switch',
                                              help='Reverse the colorset')
+
+        # Sunpath #######################################################################
+        with st.expander('Sunpath'):
+
+            sunpath_radio = st.radio(
+                '', ['using lat-lon', 'from epw location', 'with epw data'], key=0)
+
+            if sunpath_radio == 'using lat-lon':
+                sunpath_lat_lon = st.text_input(
+                    'Latitude and Longitude separated by a comma', value='0.0,0.0')
+                sunpath_switch = st.checkbox('Switch colors', key='sunpath_switch',
+                                             help='Reverse the colorset')
+                sunpath_data = None
+
+            elif sunpath_radio == 'from epw location':
+                sunpath_switch = st.checkbox('Switch colors', key='sunpath_switch',
+                                             help='Reverse the colorset')
+                sunpath_lat_lon = None
+                sunpath_data = None
+
+            else:
+                sunpath_selected = st.selectbox(
+                    'Select an environmental variable', options=fields.keys(), key='sunpath')
+                sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
+                sunpath_switch = None
+                sunpath_lat_lon = None
 
     ####################################################################################
     # Main page
@@ -163,21 +190,21 @@ def main():
                     ' file for Boston, USA.')
         st.markdown('🖱️ Hover over every chart to see the values.')
 
-        st.header(f'{epw.location.city}, {epw.location.country}')
+        st.header(f'{global_epw.location.city}, {global_epw.location.country}')
 
         # image and map ################################################################
         col1, col2 = st.columns(2)
 
         with col1:
             st.text(
-                f'Latitude: {epw.location.latitude}, Longitude: {epw.location.longitude},'
-                f' Timezone: {epw.location.time_zone}, source: {epw.location.source}')
+                f'Latitude: {global_epw.location.latitude}, Longitude: {global_epw.location.longitude},'
+                f' Timezone: {global_epw.location.time_zone}, source: {global_epw.location.source}')
 
             with st.expander('Load imge from local drive'):
                 local_image = st.file_uploader(
                     'Select an image', type=['png', 'jpg', 'jpeg'])
 
-            get_image(epw.location.latitude, epw.location.longitude)
+            get_image(global_epw.location.latitude, global_epw.location.longitude)
 
             if local_image:
                 st.image(local_image)
@@ -189,7 +216,8 @@ def main():
 
         with col2:
             location = pd.DataFrame(
-                [np.array([epw.location.latitude, epw.location.longitude], dtype=np.float64)],
+                [np.array([global_epw.location.latitude,
+                          global_epw.location.longitude], dtype=np.float64)],
                 columns=['latitude', 'longitude']
             )
             st.map(location, use_container_width=True)
@@ -228,7 +256,7 @@ def main():
                 ' "Dry bulb temperature" and "relative humidity" are selected.')
 
             bar_chart_figure = get_bar_chart_figure(
-                fields, epw, bar_chart_selection, bar_chart_data_type,
+                fields, global_epw, bar_chart_selection, bar_chart_data_type,
                 bar_chart_switch, bar_chart_stack, global_colorset)
 
             st.plotly_chart(bar_chart_figure, use_container_width=True,
@@ -277,6 +305,30 @@ def main():
             st.plotly_chart(daily_chart_figure, use_container_width=True,
                             config=get_figure_config(
                                 f'{daily_chart_data.header.data_type.name}'))
+
+        # Sunpath #######################################################################
+        with st.container():
+
+            st.header('Sunpath')
+            st.markdown('Generate a sunpath based on the latitude and longitude of a'
+                        ' location. Additionally, you can also load one of the environmental'
+                        ' variables from the EPW file on the sunpath. By default, the'
+                        ' sunpath is plotted for the location mentioned in the EPW file.'
+                        )
+
+            sunpath_figure = get_sunpath_figure(
+                sunpath_radio, global_colorset, global_epw, sunpath_switch,
+                sunpath_lat_lon, sunpath_data)
+
+            if sunpath_lat_lon:
+                lat, lon = sunpath_lat_lon.split(',')
+                file_name = 'Sunpath_' + lat + '_' + lon
+            else:
+                file_name = 'Sunpath_' + global_epw.location.city
+
+            st.plotly_chart(sunpath_figure, use_container_width=True,
+                            config=get_figure_config(
+                                f'{file_name}'))
 
 
 if __name__ == '__main__':
