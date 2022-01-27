@@ -62,6 +62,20 @@ def color_hash_func(color: Color) -> Tuple[float, float, float]:
     return color.r, color.g, color.b
 
 
+def get_figure_config(title: str) -> dict:
+    """Set figure config so that a figure can be downloaded as SVG."""
+
+    return {
+        'toImageButtonOptions': {
+            'format': 'svg',  # one of png, svg, jpeg, webp
+            'filename': title,
+            'height': 350,
+            'width': 700,
+            'scale': 1  # Multiply title/legend/axis/canvas sizes by this factor
+        }
+    }
+
+
 @st.cache()
 def get_fields() -> dict:
     # A dictionary of EPW variable name to its corresponding field number
