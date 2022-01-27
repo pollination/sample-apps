@@ -9,6 +9,8 @@ from icrawler.builtin import GoogleImageCrawler
 from geopy.geocoders import Nominatim
 from plotly.graph_objects import Figure
 from ladybug.datacollection import HourlyContinuousCollection
+from ladybug.datatype.temperaturetime import HeatingDegreeTime, CoolingDegreeTime
+from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
 
 from ladybug.epw import EPW, EPWFields
 from ladybug.color import Colorset, Color
@@ -315,3 +317,49 @@ def get_sunpath_figure(sunpath_type: str, global_colorset: str, epw: EPW = None,
         lb_sunpath = Sunpath.from_location(epw.location)
         colors = colorsets[global_colorset]
         return lb_sunpath.plot(colorset=colors, data=data)
+
+
+@st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
+                      Color: color_hash_func}, allow_output_mutation=True)
+def get_degree_days_figure(
+    dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
+    stack: bool, switch: bool, global_colorset: str) -> Tuple[Figure,
+                                                              HourlyContinuousCollection,
+                                                              HourlyContinuousCollection]:
+    """Create HDD and CDD figure.
+
+    Args:
+        dbt: A HourlyContinuousCollection object.
+        _heat_base_: A number representing the heat base temperature.
+        _cool_base_: A number representing the cool base temperature.
+        stack: A boolean to indicate whether to stack the data.
+        switch: A boolean to indicate whether to reverse the colorset.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A tuple of three items:
+
+        -   A plotly figure.
+
+        -   Heating degree days as a HourlyContinuousCollection.
+
+        -   Cooling degree days as a HourlyContinuousCollection.
+    """
+
+    hourly_heat = HourlyContinuousCollection.compute_function_aligned(
+        heating_degree_time, [dbt, _heat_base_],
+        HeatingDegreeTime(), 'degC-hours')
+    hourly_heat.convert_to_unit('degC-days')
+
+    hourly_cool = HourlyContinuousCollection.compute_function_aligned(
+        cooling_degree_time, [dbt, _cool_base_],
+        CoolingDegreeTime(), 'degC-hours')
+    hourly_cool.convert_to_unit('degC-days')
+
+    colors = get_colors(switch, global_colorset)
+
+    lb_lp = LegendParameters(colors=colors)
+    monthly_chart = MonthlyChart([hourly_cool.total_monthly(),
+                                  hourly_heat.total_monthly()], legend_parameters=lb_lp)
+
+    return monthly_chart.plot(stack=stack), hourly_heat, hourly_cool
