@@ -22,7 +22,7 @@ from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
 from ladybug_charts.utils import Strategy
 
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
-    get_bar_chart_figure
+    get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -110,8 +110,21 @@ def main():
                                                     'Daily average',
                                                     'Daily total'), key=0)
             bar_chart_switch = st.checkbox(
-                'Switch colors', value=False, key='bar_chart_switch')
+                'Switch colors', value=False, key='bar_chart_switch',
+                help='Reverse the colorset')
             bar_chart_stack = st.checkbox('Stack', value=False, key='bar_chart_stacked')
+
+        # Hourly line chart ############################################################
+        with st.expander('Hourly line chart'):
+
+            hourly_line_chart_selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), index=2,
+                key='line_chart')
+            hourly_line_chart_data = epw._get_data_by_field(
+                fields[hourly_line_chart_selected])
+
+            hourly_line_chart_switch = st.checkbox('Switch colors', key='line_chart_switch',
+                                                   help='Reverse the colorset')
 
     ####################################################################################
     # Main page
@@ -177,7 +190,8 @@ def main():
             if isinstance(hourly_data_figure, str):
                 st.error(hourly_data_figure)
             else:
-                st.plotly_chart(hourly_data_figure, use_container_width=True)
+                st.plotly_chart(hourly_data_figure, use_container_width=True,
+                                config=get_figure_config(f'{hourly_data.header.data_type}'))
 
         # Bar Chart ####################################################################
         with st.container():
@@ -191,7 +205,21 @@ def main():
                 fields, epw, bar_chart_selection, bar_chart_data_type,
                 bar_chart_switch, bar_chart_stack, global_colorset)
 
-            st.plotly_chart(bar_chart_figure, use_container_width=True)
+            st.plotly_chart(bar_chart_figure, use_container_width=True,
+                            config=get_figure_config(f'{bar_chart_data_type}'))
+
+        # Hourly line chart ############################################################
+        with st.container():
+            st.header('Hourly line chart')
+            st.markdown(
+                'Select an environmental variable from the EPW weatherfile to visualize on a'
+                ' line chart. By default, the hourly data is set to "relative humidity".')
+
+            hourly_line_chart_figure = get_hourly_line_chart_figure(
+                hourly_line_chart_data, hourly_line_chart_switch, global_colorset)
+
+            st.plotly_chart(hourly_line_chart_figure, use_container_width=True,
+                            config=get_figure_config(f'{hourly_line_chart_selected}'))
 
 
 if __name__ == '__main__':
