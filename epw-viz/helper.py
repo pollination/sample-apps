@@ -179,3 +179,16 @@ def get_bar_chart_figure(fields: dict, epw: EPW, selection: List[str], data_type
     lb_lp = LegendParameters(colors=colors)
     monthly_chart = MonthlyChart(data, legend_parameters=lb_lp)
     return monthly_chart.plot(stack=stack, title=data_type, show_title=True)
+
+
+@st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
+                      Color: color_hash_func}, allow_output_mutation=True)
+def get_hourly_line_chart_figure(data: HourlyContinuousCollection,
+                                 switch: bool, global_colorset: str) -> Figure:
+    if switch:
+        colors = list(colorsets[global_colorset])
+        colors.reverse()
+    else:
+        colors = colorsets[global_colorset]
+
+    return data.line_chart(color=colors[-1])
