@@ -174,7 +174,10 @@ def main():
                 hourly_data, global_colorset, hourly_data_conditional_statement,
                 hourly_data_min, hourly_data_max)
 
-            st.plotly_chart(hourly_data_figure, use_container_width=True)
+            if isinstance(hourly_data_figure, str):
+                st.error(hourly_data_figure)
+            else:
+                st.plotly_chart(hourly_data_figure, use_container_width=True)
 
         # Bar Chart ####################################################################
         with st.container():

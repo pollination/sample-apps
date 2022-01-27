@@ -90,7 +90,8 @@ def get_image(latitude: float, longitude: float) -> None:
     google_crawler.crawl(keyword=keyword, max_num=1, filters=filters)
 
 
-@st.cache(allow_output_mutation=True, hash_funcs={HourlyContinuousCollection: hourly_data_hash_func, Color: color_hash_func})
+@st.cache(allow_output_mutation=True,
+          hash_funcs={HourlyContinuousCollection: hourly_data_hash_func, Color: color_hash_func})
 def get_hourly_data_figure(data: HourlyContinuousCollection, global_colorset: str,
                            conditional_statement: str, min: float, max: float) -> Figure:
     """Function to help streamlit create a plotly figure from a HourlyContinuousCollection object.
@@ -111,25 +112,21 @@ def get_hourly_data_figure(data: HourlyContinuousCollection, global_colorset: st
             data = data.filter_by_conditional_statement(
                 conditional_statement)
         except AssertionError:
-            st.error('No values found for that conditional statement')
-            data = data
+            return 'No values found for that conditional statement'
         except ValueError:
-            st.error('Invalid conditional statement')
-            data = data
+            return 'Invalid conditional statement'
 
     if min:
         try:
             min = float(min)
         except ValueError:
-            st.error('Invalid minimum value')
-            min = None
+            return 'Invalid minimum value'
 
     if max:
         try:
             max = float(max)
         except ValueError:
-            st.error('Invalid maximum value')
-            max = None
+            return 'Invalid maximum value'
 
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
 
