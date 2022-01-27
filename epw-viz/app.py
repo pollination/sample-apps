@@ -2,7 +2,7 @@ import pathlib
 import streamlit as st
 import pandas as pd
 import numpy as np
-
+import copy
 
 from ladybug.epw import EPW, EPWFields
 from ladybug.hourlyplot import HourlyPlot
@@ -21,7 +21,8 @@ from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
 
 from ladybug_charts.utils import Strategy
 
-from helper import get_image, city_name
+from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
+    get_bar_chart_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -37,8 +38,15 @@ st.sidebar.image(
 
 def main():
 
+    ####################################################################################
+    # Control panel
+    ####################################################################################
     with st.sidebar:
-        # epw file
+
+        # A dictionary of EPW variable name to its corresponding field number
+        fields = get_fields()
+
+        # epw file #####################################################################
         with st.expander('Upload an EPW file'):
             epw_data = st.file_uploader('', type='epw')
             if epw_data:
@@ -50,10 +58,9 @@ def main():
 
             epw = EPW(epw_file)
 
-        # analysis period
+        # analysis period ##############################################################
         with st.expander('Apply analysis period'):
 
-            # switch between 'default' and 'custom'
             analysis_period = st.radio('Select default analysis period',
                                        options=['Default', 'Custom'])
             if analysis_period == 'Custom':
@@ -75,6 +82,40 @@ def main():
             else:
                 lb_ap = None
 
+        # Global Colorset ##############################################################
+        with st.expander('Apply global colorset'):
+            global_colorset = st.selectbox('', list(colorsets.keys()))
+
+        # Hourly data ##################################################################
+        with st.expander('Hourly data'):
+            selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), key='hourly_data')
+            hourly_data = epw._get_data_by_field(fields[selected])
+            hourly_data_conditional_statement = st.text_input(
+                'Apply conditional statement')
+            hourly_data_min = st.text_input('Min')
+            hourly_data_max = st.text_input('Max')
+
+        # Bar Chart ####################################################################
+        with st.expander('Bar Chart'):
+
+            bar_chart_selection = []
+            for var in fields.keys():
+                if var == 'Dry Bulb Temperature' or var == 'Relative Humidity':
+                    bar_chart_selection.append(st.checkbox(var, value=True))
+                else:
+                    bar_chart_selection.append(st.checkbox(var, value=False))
+
+            bar_chart_data_type = st.selectbox('', ('Monthly average', 'Monthly total',
+                                                    'Daily average',
+                                                    'Daily total'), key=0)
+            bar_chart_switch = st.checkbox(
+                'Switch colors', value=False, key='bar_chart_switch')
+            bar_chart_stack = st.checkbox('Stack', value=False, key='bar_chart_stacked')
+
+    ####################################################################################
+    # Main page
+    ####################################################################################
     with st.container():
         st.title('Weather Data Visualization App!')
 
@@ -85,28 +126,20 @@ def main():
 
         st.header(f'{epw.location.city}, {epw.location.country}')
 
+        # image and map ################################################################
         col1, col2 = st.columns(2)
 
         with col1:
-            # write location info
             st.text(
                 f'Latitude: {epw.location.latitude}, Longitude: {epw.location.longitude},'
                 f' Timezone: {epw.location.time_zone}, source: {epw.location.source}')
 
-            # load image
-            # local image
             with st.expander('Load imge from local drive'):
                 local_image = st.file_uploader(
                     'Select an image', type=['png', 'jpg', 'jpeg'])
 
-            # get the image from the internet
-            # get the city name from latitude and longitude
-            keyword = city_name(epw.location.latitude,
-                                epw.location.longitude) + ' city image'
-            get_image(keyword)
+            get_image(epw.location.latitude, epw.location.longitude)
 
-            # If someone loads an image from local drive, use it else use the image from
-            # the internet
             if local_image:
                 st.image(local_image)
             else:
@@ -115,13 +148,47 @@ def main():
                 except FileNotFoundError:
                     pass
 
-        # add a map
         with col2:
             location = pd.DataFrame(
                 [np.array([epw.location.latitude, epw.location.longitude], dtype=np.float64)],
                 columns=['latitude', 'longitude']
             )
             st.map(location, use_container_width=True)
+
+        # Hourly data ##################################################################
+        with st.container():
+            st.header('visualize hourly data')
+            st.markdown(
+                'Select an environmental variable from the EPW weatherfile to visualize.'
+                ' By default, the hourly data is set to "dry bulb temperature".'
+                ' You can use the conditional statement to filter the data.'
+                ' For example, to see the dry bulb temperature above 10, you'
+                ' can use the conditional statement, "a>10" without quotes.'
+                ' To see dry bulb temperature between -5 and 10 you can use the '
+                ' conditional statement, "a>-5 and a<10" without quotes.'
+                ' You can also use the min and max inputs to customize the bounds of the'
+                ' data you are visualizing and the legend. By default, the chart uses the'
+                ' minimum and maximum values of the data to set the bounds.')
+
+            hourly_data_figure = get_hourly_data_figure(
+                hourly_data, global_colorset, hourly_data_conditional_statement,
+                hourly_data_min, hourly_data_max)
+
+            st.plotly_chart(hourly_data_figure, use_container_width=True)
+
+        # Bar Chart ####################################################################
+        with st.container():
+            st.header('Bar chart')
+            st.markdown(
+                'Select one or more environmental variable from the EPW weatherfile to'
+                ' visualize side by side on a monthly or daily bar chart. By default, '
+                ' "Dry bulb temperature" and "relative humidity" are selected.')
+
+            bar_chart_figure = get_bar_chart_figure(
+                fields, epw, bar_chart_selection, bar_chart_data_type,
+                bar_chart_switch, bar_chart_stack, global_colorset)
+
+            st.plotly_chart(bar_chart_figure, use_container_width=True)
 
 
 if __name__ == '__main__':
