@@ -36,7 +36,7 @@ def main():
         with st.expander('Upload EPW file'):
             epw_data = st.file_uploader('', type='epw')
             if epw_data:
-                epw_file = pathlib.Path('./data/sample.epw')
+                epw_file = pathlib.Path(f'./data/{epw_data.name}')
                 epw_file.parent.mkdir(parents=True, exist_ok=True)
                 epw_file.write_bytes(epw_data.read())
             else:
