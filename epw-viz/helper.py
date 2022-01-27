@@ -108,7 +108,7 @@ def get_image(latitude: float, longitude: float) -> None:
                       Color: color_hash_func}, allow_output_mutation=True)
 def get_hourly_data_figure(data: HourlyContinuousCollection, global_colorset: str,
                            conditional_statement: str, min: float, max: float) -> Figure:
-    """Function to help streamlit create a plotly figure from a HourlyContinuousCollection object.
+    """Create heatmap from hourly data.
 
     Args:
         data: HourlyContinuousCollection object.
@@ -199,6 +199,16 @@ def get_bar_chart_figure(fields: dict, epw: EPW, selection: List[str], data_type
                       Color: color_hash_func}, allow_output_mutation=True)
 def get_hourly_line_chart_figure(data: HourlyContinuousCollection,
                                  switch: bool, global_colorset: str) -> Figure:
+    """Create hourly line chart figure.
+
+    Args:
+        data: An HourlyContinuousCollection object.
+        switch: A boolean to indicate whether to reverse the colorset.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A plotly figure.
+    """
     if switch:
         colors = list(colorsets[global_colorset])
         colors.reverse()
