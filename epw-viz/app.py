@@ -23,7 +23,7 @@ from ladybug_charts.utils import Strategy
 
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
     get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config,\
-    get_per_hour_line_chart_figure
+    get_per_hour_line_chart_figure, get_daily_chart_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -139,6 +139,17 @@ def main():
             per_hour_line_chart_switch = st.checkbox('Switch colors', key='per_hour_chart_switch',
                                                      help='Reverse the colorset')
 
+        # Daily chart ###################################################################
+        with st.expander('Daily chart'):
+
+            daily_chart_selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), index=16,
+                key='daily_chart')
+            daily_chart_data = epw._get_data_by_field(fields[daily_chart_selected])
+
+            daily_chart_switch = st.checkbox('Switch colors', key='daily_chart_switch',
+                                             help='Reverse the colorset')
+
     ####################################################################################
     # Main page
     ####################################################################################
@@ -248,6 +259,22 @@ def main():
             st.plotly_chart(per_hour_line_chart_figure, use_container_width=True,
                             config=get_figure_config(
                                 f'{per_hour_line_chart_data.header.unit}'))
+
+        # Daily chart ###################################################################
+        with st.container():
+
+            st.header('Daily chart')
+            st.markdown(
+                'Select an environmental variable from the EPW weatherfile to visualize on a'
+                ' daily chart. This chart shows average daily values. By default, the hourly'
+                ' data is set to "Total sky cover".')
+
+            daily_chart_figure = get_daily_chart_figure(
+                daily_chart_data, daily_chart_switch, global_colorset)
+
+            st.plotly_chart(daily_chart_figure, use_container_width=True,
+                            config=get_figure_config(
+                                f'{daily_chart_data.header.data_type.name}'))
 
 
 if __name__ == '__main__':
