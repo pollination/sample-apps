@@ -23,7 +23,8 @@ from ladybug_charts.utils import Strategy
 
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
     get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config,\
-    get_per_hour_line_chart_figure, get_daily_chart_figure, get_sunpath_figure
+    get_per_hour_line_chart_figure, get_daily_chart_figure, get_sunpath_figure,\
+    get_degree_days_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -179,6 +180,20 @@ def main():
                 sunpath_switch = None
                 sunpath_lat_lon = None
 
+        # Degree days ###################################################################
+        with st.expander('Degree days'):
+
+            degree_days_stack = st.checkbox('Stack')
+
+            degree_days_heat_base = st.number_input('Base heating temperature',
+                                                    value=18)
+
+            degree_days_switch = st.checkbox('Switch colors', key='degree_switch',
+                                             help='Reverse the colorset')
+
+            degree_days_cool_base = st.number_input('Base cooling temperature',
+                                                    value=23)
+
     ####################################################################################
     # Main page
     ####################################################################################
@@ -329,6 +344,32 @@ def main():
             st.plotly_chart(sunpath_figure, use_container_width=True,
                             config=get_figure_config(
                                 f'{file_name}'))
+
+        # Degree days ###################################################################
+        with st.container():
+
+            st.header('Degree Days')
+            st.markdown('Calculates heating and cooling degree-days.'
+                        ' Traditionally, degree-days are defined as the difference between'
+                        ' a base temperature and the average ambient air temperature'
+                        ' multiplied by the number of days that this difference exists.'
+                        ' by default, the base heating temperature and base cooling'
+                        ' degree temperatures are set to 18C and 23C respectively.'
+                        ' Which means, it is assumed that below the heating base temperature'
+                        ' heating will be deployed and above the cooling base temperature'
+                        ' cooling will be deployed.')
+
+            degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
+                global_epw.dry_bulb_temperature, degree_days_heat_base,
+                degree_days_cool_base, degree_days_stack, degree_days_switch,
+                global_colorset)
+
+            st.plotly_chart(degree_days_figure, use_container_width=True,
+                            config=get_figure_config(
+                                f'Degree days_{global_epw.location.city}'))
+            st.text(
+                f'Total Cooling degree days are {round(hourly_cool.total)}'
+                f' and total heating degree days {round(hourly_heat.total)}.')
 
 
 if __name__ == '__main__':
