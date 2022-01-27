@@ -240,3 +240,29 @@ def get_per_hour_line_chart_figure(data: HourlyContinuousCollection,
 
     return data.per_hour_line_chart(title=data.header.unit, show_title=True,
                                     color=colors[-1])
+
+
+@st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
+                      Color: color_hash_func}, allow_output_mutation=True)
+def get_daily_chart_figure(data: HourlyContinuousCollection, switch: bool,
+                           global_colorset: str) -> Figure:
+    """Create daily chart figure.
+
+    Args:
+        data: An HourlyContinuousCollection object.
+        switch: A boolean to indicate whether to reverse the colorset.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A plotly figure.
+    """
+    if switch:
+        colors = list(colorsets[global_colorset])
+        colors.reverse()
+    else:
+        colors = colorsets[global_colorset]
+
+    data = data.average_daily()
+
+    return data.bar_chart(color=colors[-1], title=data.header.data_type.name,
+                          show_title=True)
