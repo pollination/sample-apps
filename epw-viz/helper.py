@@ -8,10 +8,12 @@ from typing import List, Tuple
 from icrawler.builtin import GoogleImageCrawler
 from geopy.geocoders import Nominatim
 from plotly.graph_objects import Figure
-from ladybug.datacollection import HourlyContinuousCollection
+
 from ladybug.datatype.temperaturetime import HeatingDegreeTime, CoolingDegreeTime
 from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
 
+from ladybug.datacollection import HourlyContinuousCollection
+from ladybug_comfort.chart.polygonpmv import PolygonPMV
 from ladybug.epw import EPW, EPWFields
 from ladybug.color import Colorset, Color
 from ladybug.legend import LegendParameters
@@ -20,6 +22,9 @@ from ladybug.monthlychart import MonthlyChart
 from ladybug.sunpath import Sunpath
 from ladybug.analysisperiod import AnalysisPeriod
 from ladybug.windrose import WindRose
+from ladybug.psychchart import PsychrometricChart
+
+from ladybug_charts.utils import Strategy
 
 colorsets = {
     'original': Colorset.original(),
@@ -379,7 +384,7 @@ def get_degree_days_figure(
 
 @st.cache(hash_funcs={Color: color_hash_func, EPW: epw_hash_func}, allow_output_mutation=True)
 def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
-                        end_day: int, end_hour: int, global_epw, global_colorset) -> Figure:
+                        end_day: int, end_hour: int, epw, global_colorset) -> Figure:
     """Create windrose figure.
 
     Args:
@@ -389,7 +394,7 @@ def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int
         end_month: A number representing the end month.
         end_day: A number representing the end day.
         end_hour: A number representing the end hour.
-        global_epw: An EPW object.
+        epw: An EPW object.
         global_colorset: A string representing the name of a Colorset.
 
     Returns:
@@ -397,11 +402,70 @@ def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int
     """
 
     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
-    wind_dir = global_epw.wind_direction.filter_by_analysis_period(lb_ap)
-    wind_spd = global_epw.wind_speed.filter_by_analysis_period(lb_ap)
+    wind_dir = epw.wind_direction.filter_by_analysis_period(lb_ap)
+    wind_spd = epw.wind_speed.filter_by_analysis_period(lb_ap)
 
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     lb_wind_rose = WindRose(wind_dir, wind_spd)
     lb_wind_rose.legend_parameters = lb_lp
 
     return lb_wind_rose.plot()
+
+
+@st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
+                      Color: color_hash_func, EPW: epw_hash_func}, allow_output_mutation=True)
+def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
+                         load_data: bool, draw_polygons: bool,
+                         data: HourlyContinuousCollection) -> Figure:
+    """Create psychrometric chart figure.
+
+    Args:
+        epw: An EPW object.
+        global_colorset: A string representing the name of a Colorset.
+        selected_strategy: A string representing the name of a psychrometric strategy.
+        load_data: A boolean to indicate whether to load the data.
+        draw_polygons: A boolean to indicate whether to draw the polygons.
+        data: Hourly data to load on psychrometric chart.
+
+    Returns:
+        A plotly figure.
+    """
+
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
+    lb_psy = PsychrometricChart(epw.dry_bulb_temperature,
+                                epw.relative_humidity, legend_parameters=lb_lp)
+
+    if selected_strategy == 'All':
+        strategies = [Strategy.comfort, Strategy.evaporative_cooling,
+                      Strategy.mas_night_ventilation, Strategy.occupant_use_of_fans,
+                      Strategy.capture_internal_heat, Strategy.passive_solar_heating]
+    elif selected_strategy == 'Comfort':
+        strategies = [Strategy.comfort]
+    elif selected_strategy == 'Evaporative Cooling':
+        strategies = [Strategy.evaporative_cooling]
+    elif selected_strategy == 'Mass + Night Ventilation':
+        strategies = [Strategy.mas_night_ventilation]
+    elif selected_strategy == 'Occupant use of fans':
+        strategies = [Strategy.occupant_use_of_fans]
+    elif selected_strategy == 'Capture internal heat':
+        strategies = [Strategy.capture_internal_heat]
+    elif selected_strategy == 'Passive solar heating':
+        strategies = [Strategy.passive_solar_heating]
+
+    pmv = PolygonPMV(lb_psy)
+
+    if load_data:
+        if draw_polygons:
+            figure = lb_psy.plot(data=data, polygon_pmv=pmv,
+                                 strategies=strategies,
+                                 solar_data=epw.direct_normal_radiation,)
+        else:
+            figure = lb_psy.plot(data=data)
+    else:
+        if draw_polygons:
+            figure = lb_psy.plot(polygon_pmv=pmv, strategies=strategies,
+                                 solar_data=epw.direct_normal_radiation)
+        else:
+            figure = lb_psy.plot()
+
+    return figure

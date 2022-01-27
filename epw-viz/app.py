@@ -2,29 +2,13 @@ import pathlib
 import streamlit as st
 import pandas as pd
 import numpy as np
-import copy
 
-from ladybug.epw import EPW, EPWFields
-from ladybug.hourlyplot import HourlyPlot
-from ladybug.legend import LegendParameters
-from ladybug.datacollection import HourlyContinuousCollection
-from ladybug.datatype.temperaturetime import HeatingDegreeTime, CoolingDegreeTime
-from ladybug.sunpath import Sunpath
-from ladybug.windrose import WindRose
-from ladybug.psychchart import PsychrometricChart
-from ladybug.color import Color, Colorset
-from ladybug.monthlychart import MonthlyChart
-from ladybug.analysisperiod import AnalysisPeriod
-
-from ladybug_comfort.chart.polygonpmv import PolygonPMV
-from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
-
-from ladybug_charts.utils import Strategy
+from ladybug.epw import EPW
 
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
     get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config,\
     get_per_hour_line_chart_figure, get_daily_chart_figure, get_sunpath_figure,\
-    get_degree_days_figure, get_windrose_figure
+    get_degree_days_figure, get_windrose_figure, get_psy_chart_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -202,6 +186,24 @@ def main():
                 'Start hour', min_value=0, max_value=23, value=0, key='windrose_st_hour')
             windrose_end_hour = st.number_input(
                 'End hour', min_value=0, max_value=23, value=23, key='windrose_end_hour')
+
+        # Psychrometric chart ############################################################
+        with st.expander('Psychrometric chart'):
+
+            psy_load_data = st.checkbox('Load data', key='psychrometric')
+            if psy_load_data:
+                psy_selected = st.selectbox('Select an environmental variable',
+                                            options=fields.keys(), key='psychrometric')
+                psy_data = global_epw._get_data_by_field(fields[psy_selected])
+            else:
+                psy_data = None
+
+            psy_draw_polygons = st.checkbox('Draw comfort polygons', key='psychrometric')
+            psy_strategy_options = ['Comfort', 'Evaporative Cooling',
+                                    'Mass + Night Ventilation', ' Occupant use of fans',
+                                    'Capture internal heat', 'Passive solar heating', 'All']
+            psy_selected_strategy = st.selectbox(
+                'Select a passive strategy', options=psy_strategy_options, key='psychrometric')
 
     ####################################################################################
     # Main page
@@ -394,6 +396,25 @@ def main():
             st.plotly_chart(windrose_figure, use_container_width=True,
                             config=get_figure_config(
                                 f'Windrose_{global_epw.location.city}'))
+
+        # Psychrometric chart ###########################################################
+        with st.container():
+            st.header('Psychrometric Chart')
+            st.markdown(
+                'Generate a psychrometric chart for the dry bulb temperature and relative'
+                ' humidity of from the weather file. You can load one of the environmental'
+                ' variables of EPW on the psychrometric chart. Additionally, you can also'
+                ' add comfort polygons to the chart by selecting one of the passive strategies.'
+                ' By default, the psychrometric shows the hours in year when a certain'
+                ' dry bulb temperature and relative humidity occurs.')
+
+            psy_chart_figure = get_psy_chart_figure(
+                global_epw, global_colorset, psy_selected_strategy, psy_load_data,
+                psy_draw_polygons, psy_data)
+
+            st.plotly_chart(psy_chart_figure, use_container_width=True,
+                            config=get_figure_config(
+                                f'Psychrometric_chart_{global_epw.location.city}'))
 
 
 if __name__ == '__main__':
