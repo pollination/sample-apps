@@ -60,32 +60,34 @@ def main():
             epw = EPW(epw_file)
 
         # analysis period ##############################################################
-        with st.expander('Apply analysis period'):
+        # with st.expander('Apply analysis period'):
 
-            analysis_period = st.radio('Select default analysis period',
-                                       options=['Default', 'Custom'])
-            if analysis_period == 'Custom':
-                st_month = st.number_input(
-                    'Start month', min_value=1, max_value=12, value=1)
-                end_month = st.number_input(
-                    'End month', min_value=1, max_value=12, value=12)
+        #     analysis_period = st.radio('Select default analysis period',
+        #                                options=['Default', 'Custom'])
+        #     if analysis_period == 'Custom':
+        #         st_month = st.number_input(
+        #             'Start month', min_value=1, max_value=12, value=1)
+        #         end_month = st.number_input(
+        #             'End month', min_value=1, max_value=12, value=12)
 
-                st_day = st.number_input('Start day', min_value=1, max_value=31, value=1)
-                end_day = st.number_input('End day', min_value=1, max_value=31, value=31)
+        #         st_day = st.number_input('Start day', min_value=1, max_value=31, value=1)
+        #         end_day = st.number_input('End day', min_value=1, max_value=31, value=31)
 
-                st_hour = st.number_input(
-                    'Start hour', min_value=0, max_value=23, value=0)
-                end_hour = st.number_input(
-                    'End hour', min_value=0, max_value=23, value=23)
+        #         st_hour = st.number_input(
+        #             'Start hour', min_value=0, max_value=23, value=0)
+        #         end_hour = st.number_input(
+        #             'End hour', min_value=0, max_value=23, value=23)
 
-                lb_ap = AnalysisPeriod(st_month, st_day, st_hour,
-                                       end_month, end_day, end_hour)
-            else:
-                lb_ap = None
+        #         lb_ap = AnalysisPeriod(st_month, st_day, st_hour,
+        #                                end_month, end_day, end_hour)
+        #     else:
+        #         lb_ap = None
 
         # Global Colorset ##############################################################
         with st.expander('Apply global colorset'):
             global_colorset = st.selectbox('', list(colorsets.keys()))
+
+        st.markdown('---')
 
         # Hourly data ##################################################################
         with st.expander('Hourly data'):
