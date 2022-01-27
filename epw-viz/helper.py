@@ -64,7 +64,7 @@ def epw_hash_func(epw: EPW) -> str:
 
 def hourly_data_hash_func(hourly_data: HourlyContinuousCollection) -> str:
     """Function to help streamlit hash an HourlyContinuousCollection object."""
-    return hourly_data.header.data_type
+    return hourly_data.header.data_type, hourly_data.average, hourly_data.min, hourly_data.max
 
 
 def color_hash_func(color: Color) -> Tuple[float, float, float]:
