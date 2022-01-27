@@ -128,8 +128,10 @@ def get_image(latitude: float, longitude: float) -> None:
 
 @st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
                       Color: color_hash_func}, allow_output_mutation=True)
-def get_hourly_data_figure(data: HourlyContinuousCollection, global_colorset: str,
-                           conditional_statement: str, min: float, max: float) -> Figure:
+def get_hourly_data_figure(
+        data: HourlyContinuousCollection, global_colorset: str, conditional_statement: str,
+        min: float, max: float, st_month: int, st_day: int, st_hour: int, end_month: int,
+        end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
 
     Args:
@@ -138,10 +140,18 @@ def get_hourly_data_figure(data: HourlyContinuousCollection, global_colorset: st
         conditional_statement: A string representing a conditional statement.
         min: A string representing the lower bound of the data range.
         max: A string representing the upper bound of the data range.
+        st_month: start month.
+        st_day: start day.
+        st_hour: start hour.
+        end_month: end month.
+        end_day: end day.
+        end_hour: end hour.
 
     Returns:
         A plotly figure.
     """
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
+    data = data.filter_by_analysis_period(lb_ap)
 
     if conditional_statement:
         try:
