@@ -24,7 +24,7 @@ from ladybug_charts.utils import Strategy
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
     get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config,\
     get_per_hour_line_chart_figure, get_daily_chart_figure, get_sunpath_figure,\
-    get_degree_days_figure
+    get_degree_days_figure, get_windrose_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -59,30 +59,6 @@ def main():
                 epw_file = './assets/sample.epw'
 
             global_epw = EPW(epw_file)
-
-        # analysis period ##############################################################
-        # with st.expander('Apply analysis period'):
-
-        #     analysis_period = st.radio('Select default analysis period',
-        #                                options=['Default', 'Custom'])
-        #     if analysis_period == 'Custom':
-        #         st_month = st.number_input(
-        #             'Start month', min_value=1, max_value=12, value=1)
-        #         end_month = st.number_input(
-        #             'End month', min_value=1, max_value=12, value=12)
-
-        #         st_day = st.number_input('Start day', min_value=1, max_value=31, value=1)
-        #         end_day = st.number_input('End day', min_value=1, max_value=31, value=31)
-
-        #         st_hour = st.number_input(
-        #             'Start hour', min_value=0, max_value=23, value=0)
-        #         end_hour = st.number_input(
-        #             'End hour', min_value=0, max_value=23, value=23)
-
-        #         lb_ap = AnalysisPeriod(st_month, st_day, st_hour,
-        #                                end_month, end_day, end_hour)
-        #     else:
-        #         lb_ap = None
 
         # Global Colorset ##############################################################
         with st.expander('Global colorset'):
@@ -209,6 +185,24 @@ def main():
             degree_days_cool_base = st.number_input('Base cooling temperature',
                                                     value=23)
 
+        # Windrose ######################################################################
+        with st.expander('Windrose'):
+
+            windrose_st_month = st.number_input(
+                'Start month', min_value=1, max_value=12, value=1, key='windrose_st_month')
+            windrose_end_month = st.number_input(
+                'End month', min_value=1, max_value=12, value=12, key='windrose_end_month')
+
+            windrose_st_day = st.number_input(
+                'Start day', min_value=1, max_value=31, value=1, key='windrose_st_day')
+            windrose_end_day = st.number_input(
+                'End day', min_value=1, max_value=31, value=31, key='windrose_end_day')
+
+            windrose_st_hour = st.number_input(
+                'Start hour', min_value=0, max_value=23, value=0, key='windrose_st_hour')
+            windrose_end_hour = st.number_input(
+                'End hour', min_value=0, max_value=23, value=23, key='windrose_end_hour')
+
     ####################################################################################
     # Main page
     ####################################################################################
@@ -269,7 +263,9 @@ def main():
 
             hourly_data_figure = get_hourly_data_figure(
                 hourly_data, global_colorset, hourly_data_conditional_statement,
-                hourly_data_min, hourly_data_max)
+                hourly_data_min, hourly_data_max, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
 
             if isinstance(hourly_data_figure, str):
                 st.error(hourly_data_figure)
@@ -385,6 +381,19 @@ def main():
             st.text(
                 f'Total Cooling degree days are {round(hourly_cool.total)}'
                 f' and total heating degree days {round(hourly_heat.total)}.')
+
+        # Windrose ######################################################################
+        with st.container():
+            st.header('Windrose')
+            st.markdown('Generate a windrose diagram')
+
+            windrose_figure = get_windrose_figure(
+                windrose_st_month, windrose_st_day, windrose_st_hour, windrose_end_month,
+                windrose_end_day, windrose_end_hour, global_epw, global_colorset)
+
+            st.plotly_chart(windrose_figure, use_container_width=True,
+                            config=get_figure_config(
+                                f'Windrose_{global_epw.location.city}'))
 
 
 if __name__ == '__main__':

@@ -18,6 +18,8 @@ from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
 from ladybug.monthlychart import MonthlyChart
 from ladybug.sunpath import Sunpath
+from ladybug.analysisperiod import AnalysisPeriod
+from ladybug.windrose import WindRose
 
 colorsets = {
     'original': Colorset.original(),
@@ -373,3 +375,33 @@ def get_degree_days_figure(
                                   hourly_heat.total_monthly()], legend_parameters=lb_lp)
 
     return monthly_chart.plot(stack=stack), hourly_heat, hourly_cool
+
+
+@st.cache(hash_funcs={Color: color_hash_func, EPW: epw_hash_func}, allow_output_mutation=True)
+def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
+                        end_day: int, end_hour: int, global_epw, global_colorset) -> Figure:
+    """Create windrose figure.
+
+    Args:
+        st_month: A number representing the start month.
+        st_day: A number representing the start day.
+        st_hour: A number representing the start hour.
+        end_month: A number representing the end month.
+        end_day: A number representing the end day.
+        end_hour: A number representing the end hour.
+        global_epw: An EPW object.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A plotly figure.
+    """
+
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
+    wind_dir = global_epw.wind_direction.filter_by_analysis_period(lb_ap)
+    wind_spd = global_epw.wind_speed.filter_by_analysis_period(lb_ap)
+
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
+    lb_wind_rose = WindRose(wind_dir, wind_spd)
+    lb_wind_rose.legend_parameters = lb_lp
+
+    return lb_wind_rose.plot()
