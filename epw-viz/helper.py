@@ -90,8 +90,8 @@ def get_image(latitude: float, longitude: float) -> None:
     google_crawler.crawl(keyword=keyword, max_num=1, filters=filters)
 
 
-@st.cache(allow_output_mutation=True,
-          hash_funcs={HourlyContinuousCollection: hourly_data_hash_func, Color: color_hash_func})
+@st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
+                      Color: color_hash_func}, allow_output_mutation=True)
 def get_hourly_data_figure(data: HourlyContinuousCollection, global_colorset: str,
                            conditional_statement: str, min: float, max: float) -> Figure:
     """Function to help streamlit create a plotly figure from a HourlyContinuousCollection object.
