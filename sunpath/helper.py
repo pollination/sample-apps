@@ -18,7 +18,7 @@ def epw_hash_func(epw: EPW) -> str:
 
 def hourly_data_hash_func(data: HourlyContinuousCollection) -> str:
     """Help streamlit hash a HourlyContinuousCollection object."""
-    return data.header.data_type
+    return data.header.data_type, data.average, data.min, data.max
 
 
 def sunpath_hash_func(sunpath: Sunpath) -> str:
@@ -35,7 +35,8 @@ def get_sunpath(latitude: float, longitude: float, north: int,
     return Sunpath(latitude, longitude, north_angle=north)
 
 
-@st.cache(hash_funcs={EPW: epw_hash_func, HourlyContinuousCollection: hourly_data_hash_func})
+@st.cache(hash_funcs={EPW: epw_hash_func, HourlyContinuousCollection: hourly_data_hash_func},
+          allow_output_mutation=True)
 def get_data(selection: List[bool], fields: dict, epw: EPW) -> List[HourlyContinuousCollection]:
     """Get data to load on sunpath and CSV report.
 
