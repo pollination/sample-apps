@@ -141,8 +141,7 @@ def get_figure_and_percentage(
             hourly_data = hourly_data.filter_by_conditional_statement(
                 conditional_statement)
         except AssertionError:
-            st.error('No values found for that conditional statement.')
-            return
+            return 'No values found for that conditional statement.'
 
     figure = hourly_data.heat_map(title=title, show_title=True,
                                   colors=colors, min_range=min_range,
@@ -227,7 +226,8 @@ def get_legend_info(analysis_type: str) -> str:
 
 
 @ st.cache(
-    allow_output_mutation=True, hash_funcs={UTCI: utci_hash_func, Color: color_hash_func})
+    allow_output_mutation=True, hash_funcs={UTCI: utci_hash_func, Color: color_hash_func,
+                                            AnalysisPeriod: analysis_period_hash_func})
 def get_data(analysis_type: str, comf_objs: List[UTCI],
              title_scenario: Dict[int, str], lb_ap,
              conditional_statement: str,
@@ -261,45 +261,61 @@ def get_data(analysis_type: str, comf_objs: List[UTCI],
         max = comf_objs[0].universal_thermal_climate_index.max
         # TODO add legend labels as per number of labels
         for count, obj in enumerate(comf_objs):
-            figure, percentage_html, result_txt = get_figure_and_percentage(
+            output = get_figure_and_percentage(
                 obj.universal_thermal_climate_index, 'UTCI ' + title_scenario[count],
                 obj.percent_comfortable, analysis_period=lb_ap,
                 conditional_statement=conditional_statement, min_range=min,
                 max_range=max, colors=colorset)
+
+            if isinstance(output, str):
+                return output
+            figure, percentage_html, result_txt = output
             figures.append(figure)
             percentage_html_objs.append(percentage_html)
             result_txts.append(result_txt)
 
     elif analysis_type == 'Comfortable or not':
         for count, obj in enumerate(comf_objs):
-            figure, percentage_html, result_txt = get_figure_and_percentage(
+            output = get_figure_and_percentage(
                 obj.is_comfortable, 'Comfortable or not ' + title_scenario[count],
                 obj.percent_comfortable, analysis_period=lb_ap,
                 conditional_statement=conditional_statement, min_range=0, max_range=1,
                 num_labels=2, labels=[0, 1], colors=colorset)
+
+            if isinstance(output, str):
+                return output
+            figure, percentage_html, result_txt = output
             figures.append(figure)
             percentage_html_objs.append(percentage_html)
             result_txts.append(result_txt)
 
     elif analysis_type == 'Comfort conditions':
         for count, obj in enumerate(comf_objs):
-            figure, percentage_html, result_txt = get_figure_and_percentage(
+            output = get_figure_and_percentage(
                 obj.thermal_condition, 'Comfort conditions' + title_scenario[count],
                 obj.percent_comfortable, analysis_period=lb_ap,
                 conditional_statement=conditional_statement, min_range=-1, max_range=1,
                 num_labels=3, labels=[-1, 0, 1], colors=colorset)
+
+            if isinstance(output, str):
+                return output
+            figure, percentage_html, result_txt = output
             figures.append(figure)
             percentage_html_objs.append(percentage_html)
             result_txts.append(result_txt)
 
     elif analysis_type == 'Comfort categories':
         for count, obj in enumerate(comf_objs):
-            figure, percentage_html, result_txt = get_figure_and_percentage(
+            output = get_figure_and_percentage(
                 obj.thermal_condition_eleven_point, 'Comfort categories ' +
                 title_scenario[count], obj.percent_comfortable, analysis_period=lb_ap,
                 conditional_statement=conditional_statement, min_range=-5, max_range=5,
                 num_labels=11, labels=[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5],
                 colors=colorset)
+
+            if isinstance(output, str):
+                return output
+            figure, percentage_html, result_txt = output
             figures.append(figure)
             percentage_html_objs.append(percentage_html)
             result_txts.append(result_txt)
