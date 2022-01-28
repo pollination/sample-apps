@@ -160,28 +160,33 @@ def main():
         comf_objs, title_scenario = get_comfort_objs_and_title(scenario, epw)
 
         # generate figures, text to show on the side and the result texts to go into report
-        figures, percentage_html_objs, result_txts = get_data(
+        result = get_data(
             analysis_type, comf_objs, title_scenario, lb_ap, conditional_statement,
             colorset)
 
-        # add figures and text on the side
-        for count, figure in enumerate(figures):
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                st.plotly_chart(figure, use_container_width=True,
-                                config=get_figure_config(f'{scenario}'))
-            with col2:
-                st.markdown(percentage_html_objs[count], unsafe_allow_html=True)
+        if isinstance(result, str):
+            st.error(result)
+        else:
+            figures, percentage_html_objs, result_txts = result
 
-        # export PDF
-        col2 = st.columns(3)[1]
-        with col2:
-            export_as_pdf = st.button("Export Report")
-        if export_as_pdf:
-            html = write_pdf(epw, intro_1, intro_2, lb_ap, conditional_statement,
-                             analysis_type, scenario, figures, result_txts)
+            # add figures and text on the side
+            for count, figure in enumerate(figures):
+                col1, col2 = st.columns([5, 1])
+                with col1:
+                    st.plotly_chart(figure, use_container_width=True,
+                                    config=get_figure_config(f'{scenario}'))
+                with col2:
+                    st.markdown(percentage_html_objs[count], unsafe_allow_html=True)
+
+            # export PDF
+            col2 = st.columns(3)[1]
             with col2:
-                st.markdown(html, unsafe_allow_html=True)
+                export_as_pdf = st.button("Export Report")
+            if export_as_pdf:
+                html = write_pdf(epw, intro_1, intro_2, lb_ap, conditional_statement,
+                                 analysis_type, scenario, figures, result_txts)
+                with col2:
+                    st.markdown(html, unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
