@@ -31,6 +31,11 @@ def color_hash_func(color: Color) -> Tuple[float, float, float]:
     return color.r, color.g, color.b
 
 
+def analysis_period_hash_func(ap: AnalysisPeriod) -> Tuple[int, int, int, int, int, int]:
+    """Function to help streamlit hash an AnalysisPeriod object."""
+    return ap.st_month, ap.st_day, ap.st_hour, ap.end_month, ap.end_day, ap.end_hour
+
+
 def get_figure_config(title: str) -> dict:
     """Set figure config so that a figure can be downloaded as SVG."""
 
