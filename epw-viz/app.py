@@ -133,16 +133,11 @@ def main():
         with st.expander('Sunpath'):
 
             sunpath_radio = st.radio(
-                '', ['using lat-lon', 'from epw location', 'with epw data'], key=0)
+                '', ['from epw location', 'with epw data'],
+                index=0, key=0
+            )
 
-            if sunpath_radio == 'using lat-lon':
-                sunpath_lat_lon = st.text_input(
-                    'Latitude and Longitude separated by a comma', value='0.0,0.0')
-                sunpath_switch = st.checkbox('Switch colors', key='sunpath_switch',
-                                             help='Reverse the colorset')
-                sunpath_data = None
-
-            elif sunpath_radio == 'from epw location':
+            if sunpath_radio == 'from epw location':
                 sunpath_switch = st.checkbox('Switch colors', key='sunpath_switch',
                                              help='Reverse the colorset')
                 sunpath_lat_lon = None
