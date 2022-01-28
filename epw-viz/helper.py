@@ -290,42 +290,22 @@ def get_daily_chart_figure(data: HourlyContinuousCollection, switch: bool,
 @st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
                       Color: color_hash_func, EPW: epw_hash_func}, allow_output_mutation=True)
 def get_sunpath_figure(sunpath_type: str, global_colorset: str, epw: EPW = None,
-                       switch: bool = False, lat_lon: str = '0.0,0.0',
+                       switch: bool = False,
                        data: HourlyContinuousCollection = None, ) -> Figure:
     """Create sunpath figure.
 
     Args:
         sunpath_type: A string representing the type of sunpath to be plotted.
-        lat_lon: A string representing the latitude and longitude of the location.
-        switch: A boolean to indicate whether to reverse the colorset.
-        epw: An EPW object.
-        load_data: A boolean to indicate whether to load the data.
-        data: Hourly data to load on sunpath.
         global_colorset: A string representing the name of a Colorset.
+        epw: An EPW object.
+        switch: A boolean to indicate whether to reverse the colorset.
+        data: Hourly data to load on sunpath.
+
 
     Returns:
         A plotly figure.
     """
-    if sunpath_type == 'using lat-lon':
-        lat, lon = lat_lon.split(',')
-        if lat:
-            try:
-                lat = float(lat)
-            except ValueError:
-                st.error('Invalid value for latitude')
-                lat = None
-        if lon:
-            try:
-                lon = float(lon)
-            except ValueError:
-                st.error('Invalid value for longitude')
-                lon = None
-
-        lb_sunpath = Sunpath(lat, lon)
-        colors = get_colors(switch, global_colorset)
-        return lb_sunpath.plot(colorset=colors)
-
-    elif sunpath_type == 'from epw location':
+    if sunpath_type == 'from epw location':
         lb_sunpath = Sunpath.from_location(epw.location)
         colors = get_colors(switch, global_colorset)
         return lb_sunpath.plot(colorset=colors)

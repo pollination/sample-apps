@@ -140,7 +140,6 @@ def main():
             if sunpath_radio == 'from epw location':
                 sunpath_switch = st.checkbox('Switch colors', key='sunpath_switch',
                                              help='Reverse the colorset')
-                sunpath_lat_lon = None
                 sunpath_data = None
 
             else:
@@ -148,7 +147,6 @@ def main():
                     'Select an environmental variable', options=fields.keys(), key='sunpath')
                 sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
                 sunpath_switch = None
-                sunpath_lat_lon = None
 
         # Degree days ###################################################################
         with st.expander('Degree days'):
@@ -333,25 +331,17 @@ def main():
         with st.container():
 
             st.header('Sunpath')
-            st.markdown('Generate a sunpath based on the latitude and longitude of a'
-                        ' location. Additionally, you can also load one of the environmental'
-                        ' variables from the EPW file on the sunpath. By default, the'
-                        ' sunpath is plotted for the location mentioned in the EPW file.'
+            st.markdown('Generate a sunpath using EPW location. Additionally, you can'
+                        ' also load one of the environmental variables from the EPW file'
+                        ' on the sunpath.'
                         )
 
             sunpath_figure = get_sunpath_figure(
-                sunpath_radio, global_colorset, global_epw, sunpath_switch,
-                sunpath_lat_lon, sunpath_data)
-
-            if sunpath_lat_lon:
-                lat, lon = sunpath_lat_lon.split(',')
-                file_name = 'Sunpath_' + lat + '_' + lon
-            else:
-                file_name = 'Sunpath_' + global_epw.location.city
+                sunpath_radio, global_colorset, global_epw, sunpath_switch, sunpath_data)
 
             st.plotly_chart(sunpath_figure, use_container_width=True,
                             config=get_figure_config(
-                                f'{file_name}'))
+                                f'Sunpath_{global_epw.location.city}'))
 
         # Degree days ###################################################################
         with st.container():
