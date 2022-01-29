@@ -111,6 +111,7 @@ def get_fields() -> dict:
     return {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
 
 
+@st.cache()
 def get_image(latitude: float, longitude: float) -> None:
     # find city name and create a keyword for search
     geolocator = Nominatim(user_agent="geoapiExercises")
