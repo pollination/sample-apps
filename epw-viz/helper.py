@@ -133,6 +133,21 @@ def get_image(latitude: float, longitude: float) -> None:
     google_crawler.crawl(keyword=keyword, max_num=1, filters=filters)
 
 
+@st.cache(hash_funcs={EPW: epw_hash_func, Color: color_hash_func}, allow_output_mutation=True)
+def get_diurnal_average_chart_figure(epw: EPW, global_colorset: str, switch: bool = False) -> Figure:
+    """Create a diurnal average chart from EPW.
+
+    Args:
+        epw: An EPW object.
+        global_colorset: A string representing the name of a Colorset.
+
+    Returns:
+        A plotly figure.
+    """
+    colors = get_colors(switch, global_colorset)
+    return epw.diurnal_average_chart(show_title=True, colors=colors)
+
+
 @st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
                       Color: color_hash_func}, allow_output_mutation=True)
 def get_hourly_data_figure(
