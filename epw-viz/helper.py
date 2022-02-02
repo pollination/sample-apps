@@ -250,9 +250,9 @@ def get_hourly_line_chart_figure(data: HourlyContinuousCollection,
 
 @st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
                       Color: color_hash_func}, allow_output_mutation=True)
-def get_per_hour_line_chart_figure(data: HourlyContinuousCollection,
-                                   switch: bool, global_colorset: str) -> Figure:
-    """Create per hour line chart figure.
+def get_hourly_diurnal_average_chart_figure(data: HourlyContinuousCollection,
+                                            switch: bool, global_colorset: str) -> Figure:
+    """Create diurnal average chart figure for hourly data.
 
     Args:
         data: An HourlyContinuousCollection object.
@@ -263,8 +263,9 @@ def get_per_hour_line_chart_figure(data: HourlyContinuousCollection,
         A plotly figure.
     """
     colors = get_colors(switch, global_colorset)
-    return data.per_hour_line_chart(title=data.header.unit, show_title=True,
-                                    color=colors[-1])
+    return data.diurnal_average_chart(
+        title=data.header.data_type.name, show_title=True,
+        color=colors[-1])
 
 
 @st.cache(hash_funcs={HourlyContinuousCollection: hourly_data_hash_func,
