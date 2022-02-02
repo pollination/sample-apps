@@ -36,7 +36,7 @@ def main():
 
         latitude: float = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
         longitude: float = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
-        north: int = st.slider('North', -180, 180, 0, 1)
+        north_angle: int = st.slider('North', -180, 180, 0, 1)
         projection: int = st.slider('Projection', 2, 3, value=3,
                                     help='Choose between 2D and 3D.')
 
@@ -81,7 +81,7 @@ def main():
         else:
             st.markdown(f'Sunpath for latitude: {latitude} and longitude: {longitude}')
 
-        sunpath: Sunpath = get_sunpath(latitude, longitude, north)
+        sunpath: Sunpath = get_sunpath(latitude, longitude, north_angle)
         hourly_data: List[HourlyContinuousCollection] = get_data(selection, fields, epw)
 
         # get sunpath vtkjs
@@ -121,7 +121,7 @@ def main():
 
         # create the compass
         co = Compass(radius=radius,
-                     north_angle=north,
+                     north_angle=north_angle,
                      spacing_factor=0.15)
 
         with col1:
