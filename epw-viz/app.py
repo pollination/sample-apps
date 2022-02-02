@@ -7,8 +7,9 @@ from ladybug.epw import EPW
 
 from helper import colorsets, get_fields, get_image, get_hourly_data_figure, \
     get_bar_chart_figure, get_hourly_line_chart_figure, get_figure_config,\
-    get_per_hour_line_chart_figure, get_daily_chart_figure, get_sunpath_figure,\
-    get_degree_days_figure, get_windrose_figure, get_psy_chart_figure
+    get_hourly_diurnal_average_chart_figure, get_daily_chart_figure, get_sunpath_figure,\
+    get_degree_days_figure, get_windrose_figure, get_psy_chart_figure, \
+    get_diurnal_average_chart_figure
 
 st.set_page_config(
     page_title='Weather data visualization', layout='wide',
@@ -49,6 +50,12 @@ def main():
             global_colorset = st.selectbox('', list(colorsets.keys()))
 
         st.markdown('---')
+
+        # diurnal average chart #########################################################
+        with st.expander('Diurnal average chart'):
+            diurnal_average_chart_switch = st.checkbox(
+                'Switch colors', value=False, key='diurnal_average_chart_switch',
+                help='Reverse the colorset')
 
         # Hourly data ##################################################################
         with st.expander('Hourly data'):
@@ -241,6 +248,19 @@ def main():
                 columns=['latitude', 'longitude']
             )
             st.map(location, use_container_width=True)
+
+        # Diurnal average chart from hourly data ########################################
+        with st.container():
+            st.header('Diurnal average chart')
+            st.markdown(
+                'A chart showing how an average day looks like in this weather each month.')
+
+            diurnal_average_chart_figure = get_diurnal_average_chart_figure(
+                global_epw, global_colorset, diurnal_average_chart_switch)
+
+            st.plotly_chart(diurnal_average_chart_figure, use_container_width=True,
+                            config=get_figure_config(
+                                f'Diurnal chart_{global_epw.location.city}'))
 
         # Hourly data ##################################################################
         with st.container():
