@@ -2,9 +2,10 @@
 
 import csv
 import pathlib
+
 import streamlit as st
 
-from typing import List, Tuple
+from typing import List, Tuple, Union, cast
 from ladybug.datacollection import HourlyContinuousCollection
 from ladybug.sunpath import Sunpath
 from ladybug.color import Color
@@ -27,21 +28,19 @@ def sunpath_hash_func(sunpath: Sunpath) -> str:
 
 
 @st.cache(hash_funcs={Sunpath: sunpath_hash_func, EPW: epw_hash_func})
-def get_sunpath(latitude: float, longitude: float, north: int,
-                epw: EPW = None) -> Tuple[float, float]:
+def get_sunpath(latitude: float, longitude: float, north: int) -> Sunpath:
     """Get latitude and longitude to plot Sunpath."""
-    if epw:
-        return Sunpath.from_location(epw.location)
     return Sunpath(latitude, longitude, north_angle=north)
 
 
 @st.cache(hash_funcs={EPW: epw_hash_func, HourlyContinuousCollection: hourly_data_hash_func},
           allow_output_mutation=True)
-def get_data(selection: List[bool], fields: dict, epw: EPW) -> List[HourlyContinuousCollection]:
+def get_data(selection: List[bool], fields: dict, epw: EPW = None) -> List[HourlyContinuousCollection]:
     """Get data to load on sunpath and CSV report.
 
     Args:
-        selection: A list of booleans indicating which data to load.
+        selection: A list of booleans. The values from fields will be chosen based on the
+            True values in this list.
         fields: A dictionary of EPW variable to epw field (a number) structure.
         epw: An EPW object.
 
@@ -62,7 +61,7 @@ def get_data(selection: List[bool], fields: dict, epw: EPW) -> List[HourlyContin
                 data.append(epw._get_data_by_field(
                     fields[list(fields.keys())[count]]))
     else:
-        data = None
+        data = []
 
     return data
 
