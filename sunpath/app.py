@@ -37,8 +37,8 @@ def main():
         latitude: float = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
         longitude: float = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
         north_angle: int = st.slider('North', -180, 180, 0, 1)
-        projection: int = st.slider('Projection', 2, 3, value=3,
-                                    help='Choose between 2D and 3D.')
+        projection: int = st.slider('Projection', 2, 3, value=3, help='Choose between'
+                                    ' 2D and 3D.')
 
         # load EPW
         with st.expander('Sunpath for EPW'):
