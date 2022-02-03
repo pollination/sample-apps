@@ -10,13 +10,13 @@ from streamlit.uploaded_file_manager import UploadedFile
 
 from ladybug.compass import Compass
 from ladybug.color import Color
-from ladybug.epw import EPW, EPWFields
+from ladybug.epw import EPW
 from ladybug.sunpath import Sunpath
 from ladybug.datacollection import HourlyContinuousCollection
 
 from pollination_streamlit_io import inputs
 
-from helper import get_sunpath_vtkjs, get_sunpath, write_csv_file, get_data
+from helper import get_sunpath_vtkjs, get_sunpath, write_csv_file, get_data, epw_fields
 
 st.set_page_config(
     page_title='Sunpath',
@@ -40,7 +40,6 @@ def main():
         projection: int = st.slider('Projection', 2, 3, value=3, help='Choose between'
                                     ' 2D and 3D.')
 
-        # load EPW
         with st.expander('Sunpath for EPW'):
             epw_data: UploadedFile = st.file_uploader('Load EPW', type='epw')
             if epw_data:
@@ -49,22 +48,13 @@ def main():
                 epw_file.write_bytes(epw_data.read())
                 global epw
                 epw = EPW(epw_file)
-                latitude, longitude = epw.location.latitude, epw.location.longitude
             else:
                 epw = None
 
-        epw_field = str
-        epw_field_number = int
-        # NOTE: The reason for using the fields from 6 to 34 is that 0 to 5 fields are;
-        # 0 year, 1 month, 2 day, 3 hour, 4 minute, 5 Uncertainty Flags. And we're not
-        # interested in those fields.
-        fields: Dict[epw_field, epw_field_number] = {
-            EPWFields._fields[i]['name'].name: i for i in range(6, 34)
-        }
         with st.expander('Load data on sunpath'):
             st.text('*Load EPW first*')
             selection: List[bool] = []
-            for var in fields.keys():
+            for var in epw_fields().keys():
                 selection.append(st.checkbox(var, value=False))
 
         st.markdown('----')
@@ -81,8 +71,9 @@ def main():
         else:
             st.markdown(f'Sunpath for latitude: {latitude} and longitude: {longitude}')
 
-        sunpath: Sunpath = get_sunpath(latitude, longitude, north_angle)
-        hourly_data: List[HourlyContinuousCollection] = get_data(selection, fields, epw)
+        sunpath: Sunpath = get_sunpath(latitude, longitude, north_angle, epw)
+        hourly_data: List[HourlyContinuousCollection] = get_data(selection, epw_fields(),
+                                                                 epw)
 
         # get sunpath vtkjs
         sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, projection, hourly_data)
