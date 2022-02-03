@@ -61,7 +61,6 @@ def main():
 
         menu: bool = st.checkbox('Show viewer controls', value=False)
 
-    # Main page
     with st.container():
 
         st.title('Interactive Sunpath App!')
@@ -75,13 +74,12 @@ def main():
         hourly_data: List[HourlyContinuousCollection] = get_data(selection, epw_fields(),
                                                                  epw)
 
-        # get sunpath vtkjs
         sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, projection, hourly_data)
 
-        # update the viewer
         st_vtkjs(sunpath_vtkjs.read_bytes(), menu=menu, key='viewer')
 
-        # generate a csv file
+        # NOTE: Since streamlit does not support centering items, we have to do it
+        # manually by creating three columns and then putting item in the middle column.
         col2 = st.columns(3)[1]
         with col2:
             write_csv = st.checkbox('Download CSV', value=False)
