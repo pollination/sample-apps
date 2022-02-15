@@ -23,7 +23,6 @@ st.sidebar.image(
     use_column_width=True
 )
 
-
 def main():
     # control panel
     with st.sidebar:
@@ -79,7 +78,7 @@ def main():
         sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, projection, data)
 
         # update the viewer
-        st_vtkjs(sunpath_vtkjs.read_bytes(), menu=menu, key='viewer')
+        st_vtkjs('viewer', content=sunpath_vtkjs.read_bytes(), menu=True, sider=False, load_new=True, style={'height': '500px'})
 
         # generate a csv file
         col2 = st.columns(3)[1]
