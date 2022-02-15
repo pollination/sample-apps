@@ -3,20 +3,26 @@
 
 import pathlib
 import streamlit as st
+
+from typing import List, Dict, Tuple
 from streamlit_vtkjs import st_vtkjs
+from streamlit.uploaded_file_manager import UploadedFile
 
 from ladybug.compass import Compass
 from ladybug.color import Color
-from ladybug.epw import EPW, EPWFields
+from ladybug.epw import EPW
+from ladybug.sunpath import Sunpath
+from ladybug.datacollection import HourlyContinuousCollection
+
 from pollination_streamlit_io import inputs
 
-from helper import get_sunpath_vtkjs, get_sunpath, write_csv_file, get_data
+from helper import get_sunpath_vtkjs, get_sunpath, write_csv_file, get_data, epw_fields
 
-# make it look good by setting up the title, icon, etc.
 st.set_page_config(
     page_title='Sunpath',
-    page_icon='https://app.pollination.cloud/favicon.ico'
-)
+    page_icon='https://app.pollination.cloud/favicon.ico',
+    initial_sidebar_state='collapsed',
+)  # type: ignore
 st.sidebar.image(
     'https://uploads-ssl.webflow.com/6035339e9bb6445b8e5f77d7/616da00b76225ec0e4d975ba'
     '_pollination_brandmark-p-500.png',
@@ -24,68 +30,61 @@ st.sidebar.image(
 )
 
 def main():
-    # control panel
+
     with st.sidebar:
 
-        latitude = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
-        longitude = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
-        north = st.slider('North', -180, 180, 0, 1)
-        projection = st.slider('Projection', 2, 3, value=3,
-                               help='Choose between 2D and 3D.')
+        latitude: float = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
+        longitude: float = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
+        north_angle: int = st.slider('North', -180, 180, 0, 1)
+        projection: int = st.slider('Projection', 2, 3, value=3, help='Choose between'
+                                    ' 2D and 3D.')
 
-        # load EPW
         with st.expander('Sunpath for EPW'):
-            epw_data = st.file_uploader('Load EPW', type='epw')
-            # if epw file is uploaded, load it
+            epw_data: UploadedFile = st.file_uploader('Load EPW', type='epw')
             if epw_data:
                 epw_file = pathlib.Path('./data/sample.epw')
                 epw_file.parent.mkdir(parents=True, exist_ok=True)
                 epw_file.write_bytes(epw_data.read())
+                global epw
                 epw = EPW(epw_file)
             else:
                 epw = None
 
-        # select data from EPW to mount on Sunpath
-        fields = {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
         with st.expander('Load data on sunpath'):
             st.text('*Load EPW first*')
-            selection = []
-            for var in fields.keys():
+            selection: List[bool] = []
+            for var in epw_fields().keys():
                 selection.append(st.checkbox(var, value=False))
 
         st.markdown('----')
 
-        menu = st.checkbox('Show viewer controls', value=False)
+        menu: bool = st.checkbox('Show viewer controls', value=False)
 
-    # Main page
     with st.container():
 
         st.title('Interactive Sunpath App!')
 
-        # set header
         if epw:
             st.markdown(f'Sunpath for {epw.location.city}')
         else:
             st.markdown(f'Sunpath for latitude: {latitude} and longitude: {longitude}')
 
-        # get sunpath
-        sunpath = get_sunpath(latitude, longitude, north, epw)
+        sunpath: Sunpath = get_sunpath(latitude, longitude, north_angle, epw)
+        hourly_data: List[HourlyContinuousCollection] = get_data(selection, epw_fields(),
+                                                                 epw)
 
-        # get data
-        data = get_data(selection, fields, epw)
-
-        # get sunpath vtkjs
-        sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, projection, data)
+        sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, projection, hourly_data)
 
         # update the viewer
         st_vtkjs('viewer', content=sunpath_vtkjs.read_bytes(), menu=True, sider=False, load_new=True, style={'height': '500px'})
 
-        # generate a csv file
+        # NOTE: Since streamlit does not support centering items, we have to do it
+        # manually by creating three columns and then putting item in the middle column.
         col2 = st.columns(3)[1]
         with col2:
             write_csv = st.checkbox('Download CSV', value=False)
             if write_csv:
-                csv_file_path = write_csv_file(sunpath, epw, data)
+                csv_file_path = write_csv_file(sunpath, epw, hourly_data)
                 with open(csv_file_path, 'r') as f:
                     st.download_button('Download CSV', f, file_name='sunpath.csv')
 
@@ -111,7 +110,7 @@ def main():
 
         # create the compass
         co = Compass(radius=radius,
-                     north_angle=north,
+                     north_angle=north_angle,
                      spacing_factor=0.15)
 
         with col1:

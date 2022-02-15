@@ -2,13 +2,14 @@
 
 import csv
 import pathlib
+
 import streamlit as st
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from ladybug.datacollection import HourlyContinuousCollection
 from ladybug.sunpath import Sunpath
 from ladybug.color import Color
-from ladybug.epw import EPW
+from ladybug.epw import EPW, EPWFields
 
 
 def epw_hash_func(epw: EPW) -> str:
@@ -16,32 +17,58 @@ def epw_hash_func(epw: EPW) -> str:
     return epw.location.city if epw else ''
 
 
-def hourly_data_hash_func(data: HourlyContinuousCollection) -> str:
+def hourly_data_hash_func(data: HourlyContinuousCollection) -> Tuple[str, float, float,
+                                                                     float]:
     """Help streamlit hash a HourlyContinuousCollection object."""
-    return data.header.data_type, data.average, data.min, data.max
+    return data.header.data_type.name, data.average, data.min, data.max
 
 
-def sunpath_hash_func(sunpath: Sunpath) -> str:
+def sunpath_hash_func(sunpath: Sunpath) -> Tuple[float, float, float]:
     """Help streamlit hash a Sunpath object."""
     return sunpath.latitude, sunpath.longitude, sunpath.north_angle
 
 
+@st.cache()
+def epw_fields() -> Dict[str, int]:
+    """Get a dictionary of EPW fields and their corresponding numbers.
+
+    The reason for using the fields from 6 to 34 is that 0 to 5 fields are;
+    0 year, 1 month, 2 day, 3 hour, 4 minute, 5 Uncertainty Flags. And we're not
+    interested in those fields.
+    """
+    return {EPWFields._fields[i]['name'].name: i for i in range(6, 35)}
+
+
 @st.cache(hash_funcs={Sunpath: sunpath_hash_func, EPW: epw_hash_func})
-def get_sunpath(latitude: float, longitude: float, north: int,
-                epw: EPW = None) -> Tuple[float, float]:
-    """Get latitude and longitude to plot Sunpath."""
-    if epw:
-        return Sunpath.from_location(epw.location)
-    return Sunpath(latitude, longitude, north_angle=north)
-
-
-@st.cache(hash_funcs={EPW: epw_hash_func, HourlyContinuousCollection: hourly_data_hash_func},
-          allow_output_mutation=True)
-def get_data(selection: List[bool], fields: dict, epw: EPW) -> List[HourlyContinuousCollection]:
-    """Get data to load on sunpath and CSV report.
+def get_sunpath(latitude: float, longitude: float, north_angle: int,
+                epw: EPW = None) -> Sunpath:
+    """Get a Sunpath object.
 
     Args:
-        selection: A list of booleans indicating which data to load.
+        latitude: A float number for latitude.
+        longitude: A float number for longitude.
+        north_angle: An integer for north angle in degrees.
+        epw: An ladybug EPW object. Default is None.
+
+    Returns:
+        A ladybug Sunpath object.
+    """
+    if epw:
+        return Sunpath.from_location(epw.location)
+
+    return Sunpath(latitude, longitude, north_angle=north_angle)
+
+
+@st.cache(hash_funcs={EPW: epw_hash_func,
+                      HourlyContinuousCollection: hourly_data_hash_func},
+          allow_output_mutation=True)
+def get_data(selection: List[bool], fields: Dict[str, int], epw: EPW = None) -> \
+        List[HourlyContinuousCollection]:
+    """Get data to mount on sunpath and the CSV report.
+
+    Args:
+        selection: The values from fields (the next argument) will be chosen based on the
+            True values in this list.
         fields: A dictionary of EPW variable to epw field (a number) structure.
         epw: An EPW object.
 
@@ -57,12 +84,11 @@ def get_data(selection: List[bool], fields: dict, epw: EPW) -> List[HourlyContin
 
     if load_data:
         data = []
-        for count, var in enumerate(selection):
-            if var:
-                data.append(epw._get_data_by_field(
-                    fields[list(fields.keys())[count]]))
+        for count, var in enumerate(fields):
+            if selection[count]:
+                data.append(epw._get_data_by_field(fields[var]))
     else:
-        data = None
+        data = []
 
     return data
 
@@ -74,8 +100,9 @@ def get_sunpath_vtkjs(sunpath: Sunpath, projection: int = 3,
 
     Args:
         sunpath: A ladybug Sunpath object.
-        projection: An integer to indicate the projection type. Default is 3D projection.
-        data: A list of ladybug HourlyContinuousCollection objects. Default is None.
+        projection: Projection type of the sunpath. 3 would create a 3D projection.
+            2 will create a 2D projection. Defaults to 3.
+        data: A list of hourly data to mount on the sunpath. Default is None.
 
     Returns:
         A tuple of two objects:
@@ -110,26 +137,27 @@ def write_csv_file(sunpath: Sunpath, epw: EPW = None,
     Args:
         sunpath: A ladybug Sunpath object.
         epw: An EPW object.
-        data: A list of ladybug HourlyContinuousCollection objects. Default is None.
+        data: A list of ladybug hourly data mounted on the sunpath. Default is None.
 
     Returns:
         CSV file path.
     """
 
-    filename = './data/sunpath.csv'
-    header = ['Month', 'Day', 'Hour', 'Altitude', 'Azimuth']
+    filename: str = './data/sunpath.csv'
+    header: List[str] = ['Month', 'Day', 'Hour', 'Altitude', 'Azimuth']
 
-    # writing to csv files
     with open(filename, 'w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
 
+        # writing header of the csv file
         if epw:
             csv_writer.writerow(['City', epw.location.city])
         csv_writer.writerow(['Latitude', str(sunpath.latitude)])
         csv_writer.writerow(['Longitude', str(sunpath.longitude)])
 
         if data:
-            data_headers = [dt.header.data_type for dt in data]
+            data_headers = [
+                f'{dt.header.data_type.name} ({dt.header.unit})' for dt in data]
             header.extend(data_headers)
             csv_writer.writerow(header)
         else:
