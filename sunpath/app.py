@@ -4,19 +4,14 @@
 import pathlib
 import streamlit as st
 
-from typing import List, Dict, Tuple
+from typing import List
 from streamlit_vtkjs import st_vtkjs
 from streamlit.uploaded_file_manager import UploadedFile
-
-from ladybug.compass import Compass
-from ladybug.color import Color
 from ladybug.epw import EPW
-from ladybug.sunpath import Sunpath
-from ladybug.datacollection import HourlyContinuousCollection
-
-from pollination_streamlit_io import inputs
 
 from helper import get_sunpath_vtkjs, get_sunpath, write_csv_file, get_data, epw_fields
+from rhino import add_rhino_controls
+
 
 st.set_page_config(
     page_title='Sunpath',
@@ -29,143 +24,64 @@ st.sidebar.image(
     use_column_width=True
 )
 
+def main(platform):
+    st.title('Interactive Sunpath App!')
+    epw = None
+    with st.expander('Click here to create a Sunpath from an EPW file'):
+        epw_data: UploadedFile = st.file_uploader('Load EPW', type='epw')
+        if epw_data:
+            epw_file = pathlib.Path('./data/sample.epw')
+            epw_file.parent.mkdir(parents=True, exist_ok=True)
+            epw_file.write_bytes(epw_data.read())
+            epw = EPW(epw_file)
 
-def main():
+    selection: List[bool] = []
+    if not epw:
+        c1, c2 = st.columns(2)
+        latitude = c1.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
+        longitude = c1.slider('Longitude', -180.0, 180.0, 0.0, 0.5)
+    else:
+        st.markdown(f'### Sunpath for {epw.location.city}')
+        latitude = epw.location.latitude
+        longitude = epw.location.longitude
+        c1, c2 = st.columns(2)
+        c1.write(f'Latitude: {latitude}')
+        c1.write(f'Longitude: {longitude}')
 
-    with st.sidebar:
+        selection = st.multiselect(
+            'Select data to plot on top of the Sunpath',
+            epw_fields().keys()
+        )
 
-        latitude: float = st.slider('Latitude', -90.0, 90.0, 0.0, 0.5)
-        longitude: float = st.slider('Longitude', -90.0, 90.0, 0.0, 0.5)
-        north_angle: int = st.slider('North', -180, 180, 0, 1)
-        projection: int = st.slider('Projection', 2, 3, value=3, help='Choose between'
-                                    ' 2D and 3D.')
+    north_angle = c2.slider('North', -180, 180, 0, 1)
+    radius = c2.slider('Sun path radius', 0, 500, 100)
 
-        with st.expander('Sunpath for EPW'):
-            epw_data: UploadedFile = st.file_uploader('Load EPW', type='epw')
-            if epw_data:
-                epw_file = pathlib.Path('./data/sample.epw')
-                epw_file.parent.mkdir(parents=True, exist_ok=True)
-                epw_file.write_bytes(epw_data.read())
-                global epw
-                epw = EPW(epw_file)
-            else:
-                epw = None
+    sunpath = get_sunpath(latitude, longitude, north_angle=north_angle, epw=epw)
 
-        with st.expander('Load data on sunpath'):
-            st.text('*Load EPW first*')
-            selection: List[bool] = []
-            for var in epw_fields().keys():
-                selection.append(st.checkbox(var, value=False))
+    # add download to sidebar
+    st.sidebar.markdown('---')
+    st.sidebar.write(
+        'Use this checkbox to download the position of suns for all the sun up hours.'
+    )
+    write_csv = st.sidebar.checkbox('Download CSV', value=False)
 
-        st.markdown('----')
-
-        menu: bool = st.checkbox('Show viewer controls', value=False)
-
-    with st.container():
-
-        st.title('Interactive Sunpath App!')
-
-        if epw:
-            st.markdown(f'Sunpath for {epw.location.city}')
-        else:
-            st.markdown(f'Sunpath for latitude: {latitude} and longitude: {longitude}')
-
-        sunpath: Sunpath = get_sunpath(latitude, longitude, north_angle, epw)
-        hourly_data: List[HourlyContinuousCollection] = get_data(selection, epw_fields(),
-                                                                 epw)
-
-        sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, projection, hourly_data)
-
-        st_vtkjs(sunpath_vtkjs.read_bytes(), menu=menu, key='viewer')
-
-        # NOTE: Since streamlit does not support centering items, we have to do it
-        # manually by creating three columns and then putting item in the middle column.
-        col2 = st.columns(3)[1]
-        with col2:
-            write_csv = st.checkbox('Download CSV', value=False)
-            if write_csv:
-                csv_file_path = write_csv_file(sunpath, epw, hourly_data)
-                with open(csv_file_path, 'r') as f:
-                    st.download_button('Download CSV', f, file_name='sunpath.csv')
-
-    # rhino integration
-
-    # get the platform from the query uri
-    query = st.experimental_get_query_params()
-    platform = query['__platform__'][0] if '__platform__' in query else 'web'
-
+    # add Rhino controls
     if platform == 'Rhino':
-        def get_colored_geometry_json_strings(geometries, hex_color):
-            rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-            geometry_dicts = [g.to_dict() for g in geometries]
-            for d in geometry_dicts:
-                d['color'] = Color(*rgb).to_dict()
-            return geometry_dicts
+        add_rhino_controls(sunpath, radius, north_angle)
 
-        # layout
-        col1, col2, col3 = st.columns(3)
+    # viewer
+    hourly_data = get_data(selection, epw_fields(), epw)
+    sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, data=hourly_data)
+    st_vtkjs(sunpath_vtkjs.read_bytes(), menu=True, key='viewer')
 
-        # values here
-        radius = st.slider('Sun path radius', 0, 500, 100)
-
-        # create the compass
-        co = Compass(radius=radius,
-                     north_angle=north_angle,
-                     spacing_factor=0.15)
-
-        with col1:
-            # analemma
-            col = st.color_picker('Analemma Color', '#000000',
-                                  key='poly-col').lstrip('#')
-            polylines = sunpath.hourly_analemma_polyline3d(radius=radius)
-            polylines_dicts = get_colored_geometry_json_strings(polylines, col)
-
-            # arcs
-            col = st.color_picker('Arcs Color', '#bcbec0',
-                                  key='arc-col').lstrip('#')
-            arcs = sunpath.monthly_day_arc3d(radius=radius)
-            arcs_dicts = get_colored_geometry_json_strings(arcs, col)
-
-        with col2:
-            # circles
-            col = st.color_picker('Circles Color', '#eb2126',
-                                  key='circl-col').lstrip('#')
-            circles = co.all_boundary_circles
-            circles_dicts = get_colored_geometry_json_strings(circles, col)
-
-            # ticks
-            col = st.color_picker('Ticks Color', '#2ea8e0',
-                                  key='tick-col').lstrip('#')
-            major_ticks = co.major_azimuth_ticks
-            minor_ticks = co.minor_azimuth_ticks
-            ticks = major_ticks + minor_ticks
-            ticks_dicts = get_colored_geometry_json_strings(ticks, col)
-
-        with col3:
-            # altitude circles
-            col = st.color_picker('Circle Color', '#05a64f',
-                                  key='tick-col').lstrip('#')
-            altitude_circ = co.stereographic_altitude_circles
-            altitude_circ_dicts = get_colored_geometry_json_strings(altitude_circ, col)
-
-            # suns
-            points = []
-            col = st.color_picker('Sun Color', '#f2b24d',
-                                  key='sun-col').lstrip('#')
-            hourly_suns = sunpath.hourly_analemma_suns()
-            for suns in hourly_suns:
-                for sun in suns:
-                    if sun.is_during_day:
-                        pt = sun.position_3d(radius=radius)
-                        points.append(pt)
-            suns_dicts = get_colored_geometry_json_strings(points, col)
-
-        # group them
-        geometries = polylines_dicts + arcs_dicts + circles_dicts + \
-            ticks_dicts + altitude_circ_dicts + suns_dicts
-
-        inputs.send(geometries, 'my-secret-key', key='goo')
+    if write_csv:
+        csv_file_path = write_csv_file(sunpath, epw, [])
+        with open(csv_file_path, 'r') as f:
+            st.sidebar.download_button('Download CSV', f, file_name='sunpath.csv')
 
 
 if __name__ == '__main__':
-    main()
+    # get the platform from the query uri
+    query = st.experimental_get_query_params()
+    platform = query['__platform__'][0] if '__platform__' in query else 'web'
+    main(platform)
