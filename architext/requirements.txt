@@ -1,0 +1,5 @@
+streamlit_vtkjs
+dragonfly-core>=1.32.15
+ladybug-vtk>=0.8.1
+honeybee-vtk>=0.33.0
+pollination-streamlit-io>=0.13.0
