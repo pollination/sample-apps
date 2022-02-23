@@ -1,6 +1,4 @@
 """The Pollination sunpath app."""
-
-
 import pathlib
 import streamlit as st
 
@@ -9,7 +7,7 @@ from streamlit_vtkjs import st_vtkjs
 from streamlit.uploaded_file_manager import UploadedFile
 from ladybug.epw import EPW
 
-from helper import get_sunpath_vtkjs, get_sunpath, write_csv_file, get_data, epw_fields
+from helper import get_sunpath_vtkjs, sunpath_by_location, sunpath_by_lat_long, write_csv_file, get_data, epw_fields
 from rhino import add_rhino_controls
 
 
@@ -56,7 +54,10 @@ def main(platform):
     north_angle = c2.slider('North', -180, 180, 0, 1)
     radius = c2.slider('Sun path radius', 0, 500, 100)
 
-    sunpath = get_sunpath(latitude, longitude, north_angle=north_angle, epw=epw)
+    if epw:
+        sunpath = sunpath_by_location(location=epw.location, north_angle=north_angle)
+    else:
+        sunpath = sunpath_by_lat_long(latitude, longitude, north_angle=north_angle)
 
     # add download to sidebar
     st.sidebar.markdown('---')
@@ -71,11 +72,25 @@ def main(platform):
 
     # viewer
     hourly_data = get_data(selection, epw_fields(), epw)
-    sunpath_vtkjs, sun_color = get_sunpath_vtkjs(sunpath, data=hourly_data)
-    st_vtkjs(sunpath_vtkjs.read_bytes(), menu=True, key='viewer')
+
+    sunpath_vtkjs = pathlib.Path(
+        './data',
+        f'{sunpath.latitude}_{sunpath.longitude}_{sunpath.north_angle}_{"".join(selection)}.vtkjs'
+    )
+    if not sunpath_vtkjs.is_file():
+        # The most reliable way to use cache in this scenario is to check the file
+        sunpath_vtkjs = get_sunpath_vtkjs(
+            sunpath, file_path=sunpath_vtkjs, data=hourly_data
+        )
+
+    st_vtkjs(content=sunpath_vtkjs.read_bytes(), toolbar=True, key='viewer')
 
     if write_csv:
-        csv_file_path = write_csv_file(sunpath, epw, [])
+        if epw:
+            csv_file_path = write_csv_file(sunpath, epw.location, hourly_data)
+        else:
+            csv_file_path = write_csv_file(sunpath, None, hourly_data)
+
         with open(csv_file_path, 'r') as f:
             st.sidebar.download_button('Download CSV', f, file_name='sunpath.csv')
 

@@ -2,6 +2,7 @@ from pollination_streamlit_io import inputs, button
 import streamlit as st
 import requests
 import json
+import uuid
 
 from helper import generate_3d_model, add_viewer
 
@@ -19,6 +20,7 @@ platform = query['__platform__'][0] if '__platform__' in query else 'web'
 
 submit= False
 first_try = 'architext_layout' not in st.session_state
+st.image('architext_header.png')
 form, image, three_d = st.columns(3)
 
 with form:
@@ -65,14 +67,16 @@ if submit:
         )
         layout = r.json()
         st.session_state['architext_layout'] = layout
+        st.session_state['architext_layout_id'] = uuid.uuid4()  # a unique id
     else:
         layout = st.session_state['architext_layout']
 
     with image:
         st.image(layout['data'][0])
 
-    room_2ds = json.loads(layout['data'][1])
-    vtk_file, hb_model = generate_3d_model(room_2ds, height, wwr)
+    vtk_file, hb_model = generate_3d_model(
+        height, wwr, st.session_state['architext_layout_id']
+    )
     with three_d:
         add_viewer(vtk_file)
 
@@ -84,7 +88,9 @@ else:
         with image:
             st.image(layout['data'][0])
         room_2ds = json.loads(layout['data'][1])
-        vtk_file, hb_model = generate_3d_model(room_2ds, height, wwr)
+        vtk_file, hb_model = generate_3d_model(
+            height, wwr, st.session_state['architext_layout_id']
+        )
         with three_d:
             add_viewer(vtk_file)
 

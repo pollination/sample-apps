@@ -68,14 +68,14 @@ def download_artifacts(job):
             hb_model = HBModel.from_dict(model_dict)
             model = Model(hb_model, SensorGridOptions.Sensors)
             model.to_vtkjs(folder=viz_file.parent, config=cfg_file,
-                           display_mode=DisplayMode.Wireframe)
+                           model_display_mode=DisplayMode.Wireframe)
 
     progress_bar.empty()
 
 
 def add_viewer(job_id, run_id, count):
     return st_vtkjs(
-        pathlib.Path('data', job_id, run_id, 'model.vtkjs').read_bytes(),
+        content=pathlib.Path('data', job_id, run_id, 'model.vtkjs').read_bytes(),
         key=str(count) + run_id
     )
 

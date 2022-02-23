@@ -72,7 +72,7 @@ def download_model(dataframe: pd.DataFrame, run_number: str) -> pathlib.Path:
     config_file = data_folder.joinpath('config.json')
     vtk_model.to_vtkjs(folder=data_folder.as_posix(), name='model',
                        config=config_file.as_posix(),
-                       display_mode=DisplayMode.Wireframe)
+                       model_display_mode=DisplayMode.Wireframe)
     return data_folder.joinpath('model.vtkjs')
 
 
@@ -220,6 +220,9 @@ if job is not None:
         for count, run_number in enumerate(uuids):
             vtk_file = download_model(dataframe, run_number)
             with viz_columns[count % column_count]:
-                st_vtkjs(vtk_file.read_bytes(), menu=True, key=str(run_number))
+                st_vtkjs(
+                    content=vtk_file.read_bytes(), toolbar=True, key=str(run_number),
+                    sidebar=False
+                )
     else:
         plt.display()

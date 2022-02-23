@@ -59,7 +59,7 @@ def view_results(owner, project, job_id, api_key):
     cfg = {
         "data": [
             {
-                "identifier": "Daylight factor...nuanced",
+                "identifier": "Daylight factor",
                 "object_type": "grid",
                 "unit": "Percentage",
                 "path": res_folder.as_posix(),
@@ -84,9 +84,12 @@ def view_results(owner, project, job_id, api_key):
     model_dict = json.load(job.download_artifact(input_model_path))
     hb_model = Model.from_dict(model_dict)
     res_model = VTKModel(hb_model, SensorGridOptions.Sensors)
-    return res_model.to_vtkjs(folder=output_folder.as_posix(), name='model',
+    vtkjs_file = pathlib.Path(output_folder.as_posix(), f'model.vtkjs')
+    if not vtkjs_file.is_file():
+        res_model.to_vtkjs(folder=output_folder.as_posix(), name='model',
                               config=config_file.as_posix(),
-                              display_mode=DisplayMode.Wireframe)
+                              model_display_mode=DisplayMode.Wireframe)
+    return vtkjs_file
 
 
 query = Query()
@@ -130,12 +133,14 @@ grid = SensorGrid.from_mesh3d(str(uuid4()), room.generate_grid(x_dim=0.5))
 model = Model(identifier=query.model_id, rooms=[room])
 model._properties._radiance = ModelRadianceProperties(model, [grid])
 model_path = model.to_hbjson(name=model.identifier, folder='data')
-vtk_path = VTKModel.from_hbjson(model_path, SensorGridOptions.Sensors).to_vtkjs(
-    folder='data', name=model.identifier)
+vtk_path = pathlib.Path('data', f'{model.identifier}.vtkjs')
+if not vtk_path.is_file():
+    VTKModel.from_hbjson(model_path, SensorGridOptions.Sensors).to_vtkjs(
+        folder='data', name=model.identifier)
 
 with c3:
     st_vtkjs(
-        pathlib.Path(vtk_path).read_bytes(),
+        content=vtk_path.read_bytes(),
         key=model.identifier
     )
 
@@ -178,4 +183,6 @@ if run_simulation:
             job.runs_dataframe.parameters
             res_model_path = view_results(
                 query.owner, query.project, query.job_id, api_key)
-            st_vtkjs(pathlib.Path(res_model_path).read_bytes(), key='results')
+            st_vtkjs(
+                content=pathlib.Path(res_model_path).read_bytes(), key='results'
+            )

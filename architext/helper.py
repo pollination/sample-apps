@@ -1,6 +1,10 @@
+import pathlib
+import json
+
+import streamlit as st
+
 from ladybug_geometry.geometry3d.pointvector import Point3D
 from ladybug_geometry.geometry3d.face import Face3D
-import pathlib
 
 from dragonfly.model import Model, Building
 # We can use Dragonfly parameters instead
@@ -12,7 +16,10 @@ from streamlit_vtkjs import st_vtkjs
 from honeybee_vtk.model import Model as VTKModel, DisplayMode
 
 
-def generate_3d_model(room_2ds, height, wwr):
+st.cache(suppress_st_warning=True)
+def generate_3d_model(height, wwr, design_id):
+    layout = st.session_state['architext_layout']
+    room_2ds = json.loads(layout['data'][1])
     rooms = []
     for space, vertices in room_2ds.items():
         pl = [Point3D(v[0], v[1], 0) for v in vertices]
@@ -33,19 +40,19 @@ def generate_3d_model(room_2ds, height, wwr):
     hb_model.wall_apertures_by_ratio(wwr)
 
     vtk_model = VTKModel(hb_model) 
-
-    vtk_file = vtk_model.to_vtkjs(
-        folder='.', name='option_1',
-        model_display_mode=DisplayMode.Surface
-    )
+    vtk_file = pathlib.Path('data', f'{design_id}_{height}_{wwr}.vtkjs')
+    if not vtk_file.is_file():
+        vtk_file.parent.mkdir(parents=True, exist_ok=True)
+        vtk_model.to_vtkjs(
+            folder=vtk_file.parent, name=vtk_file.stem,
+            model_display_mode=DisplayMode.Surface
+        )
 
     return vtk_file, hb_model
 
 
 def add_viewer(vtk_file):
-    try:
-        # newer version
-        st_vtkjs('lala', content=pathlib.Path(vtk_file).read_bytes(), menu=False)
-    except:
-        # fall back to the older version
-        st_vtkjs(key='lala', file=pathlib.Path(vtk_file).read_bytes(), menu=False)
+    st_vtkjs(
+        '3d_viewer', content=pathlib.Path(vtk_file).read_bytes(), toolbar=False,
+        style={'height': '500px'}
+    )
