@@ -8,7 +8,7 @@ def leed_config(folder: pathlib.Path) -> str:
     cfg = {
         "data": [
             {
-                "identifier": "Illuminance 9am...ecotect",
+                "identifier": "Illuminance 9am",
                 "object_type": "grid",
                 "unit": "Lux",
                 "path": 'illuminance-9am',
@@ -26,7 +26,7 @@ def leed_config(folder: pathlib.Path) -> str:
                 }
             },
             {
-                "identifier": "Illuminance 3pm...ecotect",
+                "identifier": "Illuminance 3pm",
                 "object_type": "grid",
                 "unit": "Lux",
                 "path": 'illuminance-3pm',
@@ -44,7 +44,7 @@ def leed_config(folder: pathlib.Path) -> str:
                 }
             },
             {
-                "identifier": "Pass/Fail 9am...ecotect",
+                "identifier": "Pass/Fail 9am",
                 "object_type": "grid",
                 "unit": "",
                 "path": 'pass-fail-9am',
@@ -62,7 +62,7 @@ def leed_config(folder: pathlib.Path) -> str:
                 }
             },
             {
-                "identifier": "Pass/Fail 3pm...ecotect",
+                "identifier": "Pass/Fail 3pm",
                 "object_type": "grid",
                 "unit": "",
                 "path": 'pass-fail-3pm',
@@ -80,7 +80,7 @@ def leed_config(folder: pathlib.Path) -> str:
                 }
             },
             {
-                "identifier": "Pass/Fail...ecotect",
+                "identifier": "Pass/Fail",
                 "object_type": "grid",
                 "unit": "",
                 "path": 'pass-fail-combined',

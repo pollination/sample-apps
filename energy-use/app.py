@@ -67,6 +67,9 @@ def download_results(job: Job) -> pathlib.Path:
         run = runs[count]
         progress_bar.progress((count + 1) / total_run)
         run_folder = results_folder.joinpath(run.id)
+        vtkjs_file = pathlib.Path(run_folder, 'model.vtkjs')
+        if vtkjs_file.is_file():
+            continue
         run_folder.mkdir(parents=True, exist_ok=True)
         try:
             # download the sql output
@@ -130,6 +133,7 @@ def build_sliders(input_set):
     return sliders_ui
 
 
+@st.cache()
 def load_eui_from_sql(job_id, run_id):
     """Get a dictionary of end uses from an SQL file."""
     sql_path = os.path.join('.', 'data', job_id, run_id, 'eplusout.sql')
@@ -163,6 +167,7 @@ def load_eui_from_sql(job_id, run_id):
     return result_dict
 
 
+@st.cache()
 def load_peak_from_sql(job_id, run_id):
     """Get a dictionary of end uses from an SQL file."""
     sql_path = os.path.join('.', 'data', job_id, run_id, 'eplusout.sql')
@@ -173,12 +178,11 @@ def load_peak_from_sql(job_id, run_id):
     return base
 
 
-@st.cache(suppress_st_warning=True)
-def add_viewer(job_id, run_id, count):
+def add_viewer(job_id, run_id):
     """Add a viewer of the model to the scene."""
     return st_vtkjs(
-        pathlib.Path('data', job_id, run_id, 'model.vtkjs').read_bytes(),
-        key=str(count) + run_id
+        content=pathlib.Path('data', job_id, run_id, 'model.vtkjs').read_bytes(),
+        key=f'{job_id}/{run_id}', style={'height': '300px'}, sidebar=False
     )
 
 
@@ -198,22 +202,16 @@ if job is not None:
     peak_dict = load_peak_from_sql(job.id, run_id)
 
     # create columns to display the resulting data
-    graphics = ['image', 'bar chart', 'another chart']
-    for count, column in enumerate(st.columns(3)):
-        if count == 2:
-            with column:
-                peak_heat = sum(peak_dict['heating'])
-                peak_cool = sum(peak_dict['cooling'])
-                peak_data = DataFrame([peak_cool, peak_heat])
-                st.header('Cooling: {} W | Heating: {} W'.format(
-                    round(peak_cool), round(peak_heat)))
-                st.bar_chart(peak_data, height=600)
-        elif count == 1:
-            with column:
-                eui_data = DataFrame([[v for v in eui_dict['end_uses'].values()]])
-                eui_data.columns = list(eui_dict['end_uses'].keys())
-                st.header('EUI: {} kWh/m2'.format(eui_dict['eui']))
-                st.bar_chart(eui_data, height=600)
-        else:
-            with column:
-                add_viewer(job.id, run_id, count)
+    viewer, c1, values = st.columns(3)
+    with viewer:
+        add_viewer(job.id, run_id)
+    with c1:
+        eui_data = DataFrame([[v for v in eui_dict['end_uses'].values()]])
+        eui_data.columns = list(eui_dict['end_uses'].keys())
+        st.bar_chart(eui_data, height=300)
+    with values:
+        st.header(f'EUI: {eui_dict["eui"]} kWh/m2')
+        peak_heat = sum(peak_dict['heating'])
+        peak_cool = sum(peak_dict['cooling'])
+        st.header(f'Peak cooling: {round(peak_cool)} W')
+        st.header(f'Peak Heating: {round(peak_heat)} W')

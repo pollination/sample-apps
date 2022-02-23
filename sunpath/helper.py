@@ -5,27 +5,11 @@ import pathlib
 
 import streamlit as st
 
-from typing import List, Tuple, Dict
+from typing import List, Dict
 from ladybug.datacollection import HourlyContinuousCollection
-from ladybug.sunpath import Sunpath
+from ladybug.sunpath import Sunpath, Location
 from ladybug.color import Color
 from ladybug.epw import EPW, EPWFields
-
-
-def epw_hash_func(epw: EPW) -> str:
-    """Help streamlit hash an EPW object."""
-    return epw.location.city if epw else ''
-
-
-def hourly_data_hash_func(data: HourlyContinuousCollection) -> Tuple[str, float, float,
-                                                                     float]:
-    """Help streamlit hash a HourlyContinuousCollection object."""
-    return data.header.data_type.name, data.average, data.min, data.max
-
-
-def sunpath_hash_func(sunpath: Sunpath) -> Tuple[float, float, float]:
-    """Help streamlit hash a Sunpath object."""
-    return sunpath.latitude, sunpath.longitude, sunpath.north_angle
 
 
 @st.cache()
@@ -39,32 +23,26 @@ def epw_fields() -> Dict[str, int]:
     return {EPWFields._fields[i]['name'].name: i for i in range(6, 35)}
 
 
-@st.cache(hash_funcs={Sunpath: sunpath_hash_func, EPW: epw_hash_func})
-def get_sunpath(latitude: float, longitude: float, north_angle: int,
-                epw: EPW = None) -> Sunpath:
+st.cache(suppress_st_warning=True)
+def sunpath_by_location(location: Location, north_angle: int) -> Sunpath:
+    return Sunpath.from_location(location, north_angle=north_angle)
+
+
+st.cache(suppress_st_warning=True)
+def sunpath_by_lat_long(latitude: float, longitude: float, north_angle: int) -> Sunpath:
     """Get a Sunpath object.
 
     Args:
         latitude: A float number for latitude.
         longitude: A float number for longitude.
         north_angle: An integer for north angle in degrees.
-        epw: An ladybug EPW object. Default is None.
 
     Returns:
         A ladybug Sunpath object.
     """
-    if epw:
-        return Sunpath.from_location(epw.location, north_angle=north_angle)
-
     return Sunpath(latitude, longitude, north_angle=north_angle)
 
 
-@st.cache(
-    hash_funcs={
-        EPW: epw_hash_func,
-        HourlyContinuousCollection: hourly_data_hash_func
-    }, allow_output_mutation=True
-)
 def get_data(selection: List[str], fields: Dict[str, int], epw: EPW = None) -> \
         List[HourlyContinuousCollection]:
     """Get data to mount on sunpath and the CSV report.
@@ -83,9 +61,12 @@ def get_data(selection: List[str], fields: Dict[str, int], epw: EPW = None) -> \
     return data
 
 
-def get_sunpath_vtkjs(sunpath: Sunpath, projection: int = 3,
-                      data: List[HourlyContinuousCollection] = None) -> Tuple[
-                          pathlib.Path, Color]:
+def get_sunpath_vtkjs(
+    sunpath: Sunpath,
+    file_path: pathlib.Path,
+    projection: int = 3,
+    data: List[HourlyContinuousCollection] = None
+) -> pathlib.Path:
     """Create a VTKJS sunpath.
 
     Args:
@@ -101,31 +82,31 @@ def get_sunpath_vtkjs(sunpath: Sunpath, projection: int = 3,
 
         -  A ladybug Color object for sun color.
     """
-
     sun_color = Color(235, 33, 38)
-    folder = pathlib.Path('./data')
 
+    folder = file_path.parent
     folder.mkdir(parents=True, exist_ok=True)
-    name = f'{sunpath.latitude}_{sunpath.longitude}_{sunpath.north_angle}'
+    name = file_path.stem
 
-    make_2d= True if projection == 2 else False
+    make_2d = True if projection == 2 else False
     sp_vtkjs = sunpath.to_vtkjs(
         folder.as_posix(), file_name=name, data=data, sun_color=sun_color,
         make_2d=make_2d
     )
 
-    return sp_vtkjs, sun_color
+    return sp_vtkjs
 
 
-@st.cache(hash_funcs={Sunpath: sunpath_hash_func, EPW: epw_hash_func,
-                      HourlyContinuousCollection: hourly_data_hash_func})
-def write_csv_file(sunpath: Sunpath, epw: EPW = None,
-                   data: List[HourlyContinuousCollection] = None) -> str:
+def write_csv_file(
+    sunpath: Sunpath,
+    location: Location = None,
+    data: List[HourlyContinuousCollection] = None
+) -> str:
     """Write a csv file with the Sunpath data and EPW data if provided.
 
     Args:
         sunpath: A ladybug Sunpath object.
-        epw: An EPW object.
+        location: A Ladybug location.
         data: A list of ladybug hourly data mounted on the sunpath. Default is None.
 
     Returns:
@@ -139,8 +120,8 @@ def write_csv_file(sunpath: Sunpath, epw: EPW = None,
         csv_writer = csv.writer(csv_file)
 
         # writing header of the csv file
-        if epw:
-            csv_writer.writerow(['City', epw.location.city])
+        if location:
+            csv_writer.writerow(['City', location.city])
         csv_writer.writerow(['Latitude', str(sunpath.latitude)])
         csv_writer.writerow(['Longitude', str(sunpath.longitude)])
 

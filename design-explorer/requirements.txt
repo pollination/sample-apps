@@ -1,4 +1,4 @@
 pollination-streamlit
 honeybee-vtk
-streamlit-vtkjs
+streamlit-vtkjs>=0.1.5
 hiplot

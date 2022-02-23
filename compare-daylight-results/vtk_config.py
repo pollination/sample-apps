@@ -8,7 +8,7 @@ def daylight_factor_config(results_path: str, folder: pathlib.Path) -> str:
     cfg = {
         "data": [
             {
-                "identifier": "Daylight factor...nuanced",
+                "identifier": "Daylight factor",
                 "object_type": "grid",
                 "unit": "Percentage",
                 "path": results_path,

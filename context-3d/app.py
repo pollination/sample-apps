@@ -107,6 +107,7 @@ if platform == 'Rhino' and json_out:
         geometry_dicts = [g for g in geometries]
         for d in geometry_dicts:
             d['color'] = Color(*rgb).to_dict()
+            d['transparency'] = 0.6
         return geometry_dicts
     
     # color picker
