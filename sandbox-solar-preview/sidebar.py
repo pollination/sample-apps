@@ -3,10 +3,7 @@ import streamlit as st
 
 def branding():
     # branding, api-key and url
-    st.sidebar.image(
-        'https://sandboxsolar.com/wp-content/uploads/2020/08/SandBox_Horizontal_White-01.png',
-        use_column_width=True
-    )
+    st.sidebar.image('logo.png', use_column_width=True)
 
 
 def active_controls():
