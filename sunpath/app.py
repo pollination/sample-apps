@@ -83,7 +83,9 @@ def main(platform):
             sunpath, file_path=sunpath_vtkjs, data=hourly_data
         )
 
-    st_vtkjs(content=sunpath_vtkjs.read_bytes(), toolbar=True, key='viewer')
+    st_vtkjs(
+        content=sunpath_vtkjs.read_bytes(), toolbar=True, key='viewer', subscribe=False
+    )
 
     if write_csv:
         if epw:

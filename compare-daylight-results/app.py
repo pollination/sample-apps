@@ -76,7 +76,7 @@ def download_artifacts(job):
 def add_viewer(job_id, run_id, count):
     return st_vtkjs(
         content=pathlib.Path('data', job_id, run_id, 'model.vtkjs').read_bytes(),
-        key=str(count) + run_id
+        key=str(count) + run_id, subscribe=False
     )
 
 

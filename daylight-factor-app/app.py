@@ -141,7 +141,7 @@ if not vtk_path.is_file():
 with c3:
     st_vtkjs(
         content=vtk_path.read_bytes(),
-        key=model.identifier
+        key=model.identifier, subscribe=False
     )
 
 
@@ -184,5 +184,6 @@ if run_simulation:
             res_model_path = view_results(
                 query.owner, query.project, query.job_id, api_key)
             st_vtkjs(
-                content=pathlib.Path(res_model_path).read_bytes(), key='results'
+                content=pathlib.Path(res_model_path).read_bytes(), key='results',
+                subscribe=False
             )

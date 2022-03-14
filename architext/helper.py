@@ -54,5 +54,5 @@ def generate_3d_model(height, wwr, design_id):
 def add_viewer(vtk_file):
     st_vtkjs(
         '3d_viewer', content=pathlib.Path(vtk_file).read_bytes(), toolbar=False,
-        style={'height': '500px'}
+        style={'height': '500px'}, subscribe=False
     )

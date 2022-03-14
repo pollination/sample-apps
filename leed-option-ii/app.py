@@ -70,7 +70,7 @@ def download_files(run):
     hb_model = HBModel.from_dict(model_dict)
     model = Model(hb_model, SensorGridOptions.Sensors)
     model.to_vtkjs(folder=viz_file.parent, name=viz_file.stem,
-                   config=cfg_file, display_mode=DisplayMode.Wireframe)
+                   config=cfg_file, model_display_mode=DisplayMode.Wireframe)
 
     return viz_file, credits, space_summary
 
@@ -125,12 +125,15 @@ if run is not None:
             )
         st.stop()
 
-    _, viz_c, _, info_c, _ = st.columns([0.5, 2, 0.25, 1.25, 0.5])
-    with viz_c:
-        st_vtkjs(viz_file.read_bytes())
+    with run_url:
+        st_vtkjs(
+            content=viz_file.read_bytes(), key='results-viewer', subscribe=False,
+            style={"height": "500px"}
+        )
+    _, info_a, info_c, _ = st.columns([0.5, 2, 2, 0.5])
 
-    with info_c:
-        data = json.loads(credits.read_text())
+    data = json.loads(credits.read_text())
+    with info_a:
         points = data['credits']
         if points > 1:
             color = 'Green'
@@ -139,18 +142,12 @@ if run is not None:
         credit_text = f'<h2 style="color:{color};">LEED Credits: {points} points</h2>'
         st.markdown(credit_text, unsafe_allow_html=True)
         st.markdown(f'### Percentage passing: {round(data["percentage_passing"], 2)}%')
+    with info_c:
         with st.expander('See model breakdown'):
             if points > 1:
                 st.balloons()
             df = pd.DataFrame.from_dict(data, orient='index', columns=['values'])
             st.table(df.style.format(precision=1))
-        with st.expander('Learn more about using the 3D viewer'):
-            st.markdown(
-                ' 1. Click on the ☰ icon to see the layers.\n\n'
-                ' 2. Select the `Grid` layer and then select `Data`.\n\n'
-                ' 3. Use the Color by dropdown to see the results for hourly '
-                'illuminace or pass/fail for 9am and 3pm.'
-            )
 
     # this is not good practice for creating the layout
     # but good enough for now
