@@ -222,7 +222,7 @@ if job is not None:
             with viz_columns[count % column_count]:
                 st_vtkjs(
                     content=vtk_file.read_bytes(), toolbar=True, key=str(run_number),
-                    sidebar=False
+                    sidebar=False, subscribe=False
                 )
     else:
         plt.display()

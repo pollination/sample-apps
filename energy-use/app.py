@@ -182,7 +182,8 @@ def add_viewer(job_id, run_id):
     """Add a viewer of the model to the scene."""
     return st_vtkjs(
         content=pathlib.Path('data', job_id, run_id, 'model.vtkjs').read_bytes(),
-        key=f'{job_id}/{run_id}', style={'height': '300px'}, sidebar=False
+        key=f'{job_id}/{run_id}', style={'height': '300px'}, sidebar=False,
+        subscribe=False
     )
 
 

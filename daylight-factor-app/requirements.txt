@@ -3,4 +3,4 @@ honeybee-core
 honeybee-radiance
 honeybee-vtk
 streamlit-autorefresh
-streamlit-vtkjs>=0.1.5
+streamlit-vtkjs>=0.2.0

@@ -1,3 +1,3 @@
 honeybee-vtk>=0.31.0
 pollination-streamlit>=0.1.1
-streamlit-vtkjs==0.0.7a0
+streamlit-vtkjs>=0.2.0
