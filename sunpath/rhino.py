@@ -18,6 +18,7 @@ def _add_color(geometries, hex_color):
 
 
 def add_rhino_controls(sunpath: Sunpath, radius: int, north_angle: float):
+    """Add Sunpath controls in Rhino."""
     # layout
     st.sidebar.markdown('### Rhino controls')
 

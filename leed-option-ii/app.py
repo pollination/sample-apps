@@ -150,7 +150,7 @@ if run is not None:
             st.table(df.style.format(precision=1))
 
     # this is not good practice for creating the layout
-    # but good enough for now
+    # but it is good enough for now
     _, table_column, _ = st.columns([0.5, 3.5, 0.5])
     with table_column:
         st.header('Space by space breakdown')
