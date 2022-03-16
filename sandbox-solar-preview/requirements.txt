@@ -1,2 +1,3 @@
 streamlit_vtkjs==0.2.0
 ladybug_charts==1.18.0
+streamlit_elements==0.0.2 

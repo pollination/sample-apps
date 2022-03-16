@@ -6,6 +6,7 @@ import pandas as pd
 
 from sidebar import branding, active_controls, place_holder_controls
 from streamlit_vtkjs import st_vtkjs
+from streamlit_elements import Elements
 
 from charts import get_graph
 
@@ -39,7 +40,26 @@ results_folder = here.joinpath('sim_data', f'{selection_index}')
 
 viz = results_folder.joinpath('results.vtkjs')
 
-st.markdown('## Annual Average Irradiance')
+# add button
+mt = Elements()
+
+mt.button(
+    "Visit our website!", 
+    target="_blank", 
+    size="medium", 
+    variant="contained", 
+    start_icon=mt.icons.send, 
+    onclick="none", 
+    style={"color":"#FFFFFF", "background":"#4ba3ff"}, 
+    href="https://sandboxsolar.com/agrivoltaics/"
+)
+
+col1, col2 = st.columns([3, 1])
+
+
+col1.markdown('## Annual Average Irradiance')
+with col2:
+    mt.show(key = "840")
 st.text(f"Location: {location['value']}; Transparency: {transparency['value']}%")
 st_vtkjs(
     key='viewer',
@@ -47,25 +67,35 @@ st_vtkjs(
     style={'height': '400px'},
     sidebar=False, subscribe=False
 )
+st.text('ℹ Hold down the Alt button to rotate around the cursor.')
 
-# TODO: Move to a separate module
-panel_file = results_folder.joinpath('Agrivoltaic_Panel.res')
-crops_file = results_folder.joinpath('Crops_Surface.res')
+# add a table for predictive outcome
+with st.expander('Click to see predictive outcome:'):
+    st.markdown(
+        'System Size: 200 kW\n\n'
+        'Estimated Tomato Production  = 200 lbs\n\n'
+        'Estimated PV Production = 200 kWh\n\n'
+        'Estimated Avg Temperature = 28 F\n\n'
+        'Estimated Soil Moisture = 200\n\n'
+        'Estimated Water Savings = 200'
+    )
 
-panel_values = panel_file.read_text().splitlines()
-crops_values = crops_file.read_text().splitlines()
+panel_file = results_folder.joinpath('Agrivoltaic_Panel.csv')
+crops_file = results_folder.joinpath('Crops_Surface.csv')
 
-length_diff = len(panel_values) - len(crops_values)
-target_list = crops_values if length_diff > 0 else panel_values
-for _ in range(abs(length_diff)):
-    target_list.append(None)
+st.sidebar.text("Download data in CSV format")
 
-annual_values = {'crops': crops_values, 'panel': panel_values}
-annual_csv = convert_to_csv(annual_values, index=True)
 st.sidebar.download_button(
-    label="Download Annual Average Values",
-    data=annual_csv,
-    file_name=f'{selection_name}_annual_average.csv',
+    label="Crops Annual Average Values",
+    data=crops_file.read_text(),
+    file_name=f'{selection_name}_crops_annual_average.csv',
+    mime='text/csv'
+)
+
+st.sidebar.download_button(
+    label="Panel Annual Average Values",
+    data=panel_file.read_text(),
+    file_name=f'{selection_name}_panel_annual_average.csv',
     mime='text/csv'
 )
 
@@ -80,7 +110,7 @@ monthly_csv = convert_to_csv(
 )
 
 st.sidebar.download_button(
-    label="Download Monthly Average Values",
+    label="Monthly Average Values",
     data=monthly_csv,
     file_name=f'{selection_name}_monthly_average.csv',
     mime='text/csv'
