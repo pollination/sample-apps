@@ -7,7 +7,7 @@ from ladybug_geometry.geometry3d.pointvector import Point3D
 from ladybug_geometry.geometry3d.face import Face3D
 
 from dragonfly.model import Model, Building
-# We can use Dragonfly parameters instead
+# We can use Dragonfly parameters instead - this will make the app easier to use
 # from dragonfly.windowparameter import SimpleWindowRatio, RectangularWindows
 # from dragonfly.shadingparameter import LouversByDistance, Overhang
 from dragonfly.story import Story, Room2D

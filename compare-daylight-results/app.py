@@ -37,7 +37,7 @@ job = job_selector(
 
 @st.cache(suppress_st_warning=True)
 def download_artifacts(job):
-    """Download artifacts on load and cache results"""
+    """Download artifacts on load and cache the results."""
     df = job.runs_dataframe.dataframe
     row_count = len(df.index)
     runs = job.runs
