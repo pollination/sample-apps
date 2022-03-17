@@ -1,6 +1,6 @@
 pollination-streamlit
 honeybee-core
 honeybee-radiance
-honeybee-vtk
+honeybee-vtk==0.33.0
 streamlit-autorefresh
 streamlit-vtkjs>=0.2.0
