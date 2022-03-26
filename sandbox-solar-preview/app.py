@@ -70,14 +70,14 @@ st_vtkjs(
 st.text('ℹ Hold down the Alt button to rotate around the cursor.')
 
 # add a table for predictive outcome
-with st.expander('Click to see predictive outcome:'):
+with st.expander('Click here to learn more about the metrics'):
     st.markdown(
-        'System Size: 200 kW\n\n'
-        'Estimated Tomato Production  = 200 lbs\n\n'
-        'Estimated PV Production = 200 kWh\n\n'
-        'Estimated Avg Temperature = 28 F\n\n'
-        'Estimated Soil Moisture = 200\n\n'
-        'Estimated Water Savings = 200'
+        'We provide two metrics that can help you to evaluate the performance of each '
+        'configuration at your specific location:\n\n'
+        '* **Average Irradiance** is the average solar power (W/m2) falling on the surface '
+        'over the course of the year.\n\n'
+        '* **Cumulative Radiation** is the total solar energy (kWh/m2) falling on the '
+        'surface over the course of the year.'
     )
 
 panel_file = results_folder.joinpath('Agrivoltaic_Panel.csv')
