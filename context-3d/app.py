@@ -6,7 +6,8 @@ import requests
 import streamlit as st
 from dragonfly_parser import get_json_array
 
-from pollination_streamlit_io import (button, inputs)
+from pollination_streamlit_io import (button, 
+    inputs, special)
 from ladybug.color import Color
 
 def deg2num(lat_deg, lon_deg, zoom):
@@ -17,7 +18,7 @@ def deg2num(lat_deg, lon_deg, zoom):
     return (xtile, ytile)
 
 query = st.experimental_get_query_params()
-platform = query['__platform__'][0] if '__platform__' in query else 'web'
+platform = special.get_host()
 
 
 @st.cache(suppress_st_warning=True)
@@ -95,7 +96,7 @@ if lbt_text_content:
         file_name=out_lbt_city)
 
 # rhino integration here!
-if platform == 'Rhino' and json_out:
+if platform == 'rhino' and json_out:
     # user color
     def get_colored_geometry_json_strings(geometries: dict, 
         hex_color: str) -> dict:
