@@ -6,6 +6,7 @@ from typing import List
 from streamlit_vtkjs import st_vtkjs
 from streamlit.uploaded_file_manager import UploadedFile
 from ladybug.epw import EPW
+from pollination_streamlit_io import special
 
 from helper import get_sunpath_vtkjs, sunpath_by_location, sunpath_by_lat_long, write_csv_file, get_data, epw_fields
 from rhino import add_rhino_controls
@@ -67,7 +68,7 @@ def main(platform):
     write_csv = st.sidebar.checkbox('Download CSV', value=False)
 
     # add Rhino controls
-    if platform == 'Rhino':
+    if platform == 'rhino':
         add_rhino_controls(sunpath, radius, north_angle)
 
     # viewer
@@ -100,5 +101,5 @@ def main(platform):
 if __name__ == '__main__':
     # get the platform from the query uri
     query = st.experimental_get_query_params()
-    platform = query['__platform__'][0] if '__platform__' in query else 'web'
+    platform = special.get_host()
     main(platform)
