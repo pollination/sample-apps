@@ -7,7 +7,7 @@ from honeybee.orientation import (angles_from_num_orient,
 from honeybee.room import Room
 from dragonfly.windowparameter import SimpleWindowRatio
 from honeybee.model import Model
-from pollination_streamlit_io import button
+from pollination_streamlit_io import button, special
 
 # create a first room
 identifier = "my-first-room"
@@ -80,9 +80,9 @@ my_model = Model(identifier=identifier,
 
 # rhino integration!
 query = st.experimental_get_query_params()
-platform = query['__platform__'][0] if '__platform__' in query else 'web'
+platform = special.get_host()
 
-if platform == 'Rhino':
+if platform == 'rhino':
   button.send('BakePollinationModel',
           my_model.to_dict(), 'my-secret-key', 
           key='my-secret-key')

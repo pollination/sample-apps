@@ -1,2 +1,2 @@
 dragonfly-core>=1.32.2
-pollination-streamlit-io>=0.8.0
+pollination-streamlit-io>=0.20.1

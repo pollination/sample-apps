@@ -1,4 +1,4 @@
-from pollination_streamlit_io import inputs, button
+from pollination_streamlit_io import inputs, button, special
 import streamlit as st
 import requests
 import json
@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 query = st.experimental_get_query_params()
-platform = query['__platform__'][0] if '__platform__' in query else 'web'
+platform = special.get_host()
 
 submit= False
 first_try = 'architext_layout' not in st.session_state
@@ -95,7 +95,7 @@ else:
             add_viewer(vtk_file)
 
 
-if not first_try and platform == 'Rhino':
+if not first_try and platform == 'rhino':
     inputs.send(
         data=hb_model.to_dict(),
         isPollinationModel=True,
