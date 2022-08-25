@@ -8,4 +8,4 @@ honeybee_vtk>=0.38.4
 geopy>=2.2.0
 
 pvlib==0.9.1
-nrel_sam==3.0.1
+nrel_pysam==3.0.1
