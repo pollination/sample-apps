@@ -43,16 +43,18 @@ def active_controls():
 
 def place_holder_controls():
 
-    with st.sidebar.expander('Panel Geometry'):
-        panel_length = st.slider(
-            'Panel Length', min_value=1, max_value=10, value=2, disabled=True
-        )
-        panel_width = st.slider(
-            'Panel Width', min_value=1, max_value=20, value=12, disabled=True
-        )
-        protrait = st.checkbox('Make panels protrait', value=False, disabled=True)
+    st.write('Panel Geometry')
+    panel_length = st.slider(
+        'Panel Length', min_value=1, max_value=10, value=2, disabled=True
+    )
+    panel_width = st.slider(
+        'Panel Width', min_value=1, max_value=20, value=12, disabled=True
+    )
+    portrait = st.checkbox('Make panels portrait', value=False, disabled=True)
 
-    with st.sidebar.expander('Table Geometry'):
+    table, array = st.columns(2)
+    with table:
+        st.write('Table Geometry')
         panel_count_x = st.slider(
             'Panels in Row', min_value=1, max_value=10, value=2, disabled=True
         )
@@ -72,7 +74,8 @@ def place_holder_controls():
             'Mirror Gap', min_value=0, max_value=10, value=0, disabled=True
         )
 
-    with st.sidebar.expander('Array Geometry'):
+    with array:
+        st.write('Array Geometry')
         spacing_array_x = st.slider(
             'Row Spacing', min_value=1, max_value=10, value=2, disabled=True,
             key='Array Row Spacing'
@@ -81,10 +84,10 @@ def place_holder_controls():
             'Column Spacing', min_value=1, max_value=10, value=2, disabled=True,
             key='Array Column Spacing'
         )
-        surronding_count_x = st.slider(
+        surrounding_count_x = st.slider(
             'Surrounding Column Count', min_value=1, max_value=10, value=2, disabled=True
         )
-        surronding_count_y = st.slider(
+        surrounding_count_y = st.slider(
             'Surrounding Row Count', min_value=1, max_value=10, value=2, disabled=True
         )
         array_azimuth = st.slider(

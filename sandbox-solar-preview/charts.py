@@ -17,5 +17,5 @@ def get_graph(panel_data, crops_data):
     )
     data_2 = MonthlyCollection(crops_header, values=crops_data, datetimes=range(1, 13))
     colors = [Color(243, 114, 32), Color(255, 213, 0)]
-    figure = bar_chart_with_table([data, data_2],stack=False, colors=colors)
+    figure = bar_chart_with_table([data, data_2], stack=False, colors=colors)
     return figure
