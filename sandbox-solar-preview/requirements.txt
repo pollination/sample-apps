@@ -1,3 +1,11 @@
-streamlit_vtkjs==0.3.1
-ladybug_charts==1.18.0
-streamlit_elements==0.0.2 
+streamlit_vtkjs>=0.3.2
+streamlit_elements>=0.0.2 
+streamlit>=1.12.0
+
+ladybug_charts>=1.18.6
+honeybee_vtk>=0.38.4
+
+geopy>=2.2.0
+
+pvlib==0.9.1
+nrel_sam==3.0.1

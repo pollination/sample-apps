@@ -1,14 +1,11 @@
-import pathlib
 from typing import Dict
 import streamlit as st
-import json
 import pandas as pd
-
-from sidebar import branding, active_controls, place_holder_controls
-from streamlit_vtkjs import st_vtkjs
 from streamlit_elements import Elements
 
-from charts import get_graph
+from location import add_map
+from configuration import add_pv_config
+from explorer import add_parallel_coordinates
 
 
 st.set_page_config(
@@ -28,100 +25,57 @@ def convert_to_csv(average_values: Dict, index=False, columns=None):
         return df.to_csv(index=index, index_label=index_label).encode('utf-8')
 
 
-branding()
-configuration, transparency, location = active_controls()
-st.sidebar.markdown('---')
-
-selection_index = f'{configuration["index"]}_{transparency["index"]}_{location["index"]}'
-selection_name = f'{configuration["value"]}_{location["value"]}_{transparency["value"]}%'
-
-here = pathlib.Path(__file__).parent
-results_folder = here.joinpath('sim_data', f'{selection_index}')
-
-viz = results_folder.joinpath('results.vtkjs')
-
-# add button
 mt = Elements()
-
 mt.button(
     "Visit our website!", 
     target="_blank", 
-    size="medium", 
+    size="large", 
     variant="contained", 
     start_icon=mt.icons.send, 
     onclick="none", 
-    style={"color":"#FFFFFF", "background":"#4ba3ff"}, 
+    style={"color":"#FFFFFF", "background":"#4ba3ff", "width": "100%"}, 
     href="https://sandboxsolar.com/agrivoltaics/"
 )
 
-col1, col2 = st.columns([3, 1])
-
-
-col1.markdown('## Annual Average Irradiance')
+col1, _, col2 = st.columns([1.5, 1.5, 1], gap='small')
+col1.image('spade_logo.png', use_column_width=True)
 with col2:
-    mt.show(key = "840")
-st.text(f"Location: {location['value']}; Transparency: {transparency['value']}%")
-st_vtkjs(
-    key='viewer',
-    content=viz.read_bytes(),
-    style={'height': '400px'},
-    sidebar=False, subscribe=False
+    mt.show(key="840")
+
+# add introduction here
+st.write(
+    'Welcome to Sandbox Solar\'s SPADE application - your platform for agrivoltaic '
+    'design & modeling. To begin, select your geographic location. You can then plot '
+    'your panel configuration and optimize the system to meet your needs.'
+    '\n\nNote: Note: Although the data on this app are calculated based on validated '
+    'methods, you should consider them for demonstration purposes only. Contact us for '
+    'an in-depth assessment of your particular project.'
 )
-st.text('ℹ Hold down the Alt button to rotate around the cursor.')
+# add the tabs to the app
+# loc_tab, config_tab, explorer_tab = st.tabs(["Location", "Panel Configuration", "Optimization"])
+# loc_tab, config_tab = st.tabs(["Location", "Panel Configuration"])
 
-# add a table for predictive outcome
-with st.expander('Click here to learn more about the metrics'):
-    st.markdown(
-        'We provide two metrics that can help you to evaluate the performance of each '
-        'configuration at your specific location:\n\n'
-        '* **Average Irradiance** is the average solar power (W/m2) falling on the surface '
-        'over the course of the year.\n\n'
-        '* **Cumulative Radiation** is the total solar energy (kWh/m2) falling on the '
-        'surface over the course of the year.'
-    )
 
-panel_file = results_folder.joinpath('Agrivoltaic_Panel.csv')
-crops_file = results_folder.joinpath('Crops_Surface.csv')
-
-st.sidebar.text("Download data in CSV format")
-
-st.sidebar.download_button(
-    label="Crops Annual Average Values",
-    data=crops_file.read_text(),
-    file_name=f'{selection_name}_crops_annual_average.csv',
-    mime='text/csv'
+st.header('1. Location')
+city = st.text_input(
+    "Type in the city and the state separated by a comma. Currently, only locations in the United States are supported.",
+    "Denver, CO"
 )
+location = add_map(city=city)
 
-st.sidebar.download_button(
-    label="Panel Annual Average Values",
-    data=panel_file.read_text(),
-    file_name=f'{selection_name}_panel_annual_average.csv',
-    mime='text/csv'
+# start configuration section
+st.header('2. Panel Configuration')
+add_pv_config(location=location)
+
+st.header('5. Dual Optimization')
+st.write(
+    'Use this parallel coordinates chart to quickly filter the best option that maximizes '
+    'electricity and crops generation. Click on the top right type arrow to maximize the chart.'
 )
 
-st.markdown('## Monthly Average Irradiance')
-average_file = results_folder.joinpath('average_monthly.json')
-average_values = json.loads(average_file.read_text())
-average_values['month'] = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-]
-monthly_csv = convert_to_csv(
-    average_values, index=False, columns=['month', 'crops', 'panel']
-)
+fig = add_parallel_coordinates(0)
+# fig = add_parallel_coordinates(location['index'])
+st.plotly_chart(fig, use_container_width=True)
 
-st.sidebar.download_button(
-    label="Monthly Average Values",
-    data=monthly_csv,
-    file_name=f'{selection_name}_monthly_average.csv',
-    mime='text/csv'
-)
-
-fig = get_graph(
-    panel_data=average_values['panel'],
-    crops_data=average_values['crops'],
-)
-st.plotly_chart(fig, use_container_width=True, height=300)
-
-# add place holder controls
-st.sidebar.markdown('---')
-place_holder_controls()
+_, _, logo, _, _ = st.columns(5)
+logo.image('AMC-solarPrize-logo-color_edited.webp')
