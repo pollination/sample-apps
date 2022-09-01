@@ -3,6 +3,7 @@ import pandas as pd
 
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
+from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 
 from ladybug_geometry.geometry2d import Point2D
 from ladybug.epw import EPW
@@ -91,6 +92,12 @@ def get_location_distance(user_location: Point2D, location: Point2D):
 
 
 @st.cache(suppress_st_warning=True)
+def get_location_dropdown():
+
+    return {d['value']: f for f, d in LOCATIONS.items()}
+
+
+@st.cache(suppress_st_warning=True)
 def get_location_info(city, country):
     geolocator = Nominatim(user_agent="GTA Lookup")
     geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
@@ -99,16 +106,32 @@ def get_location_info(city, country):
 
 
 def add_map(city, country='United States'):
-
-    location = get_location_info(city, country)
-    if not location:
-        st.error(f'We could not find any information for {city}. Check the location and try again.')
-        st.stop()
+    __here__ = pathlib.Path(__file__).parent
+    try:
+        location = get_location_info(city, country)
+    except (GeocoderUnavailable, GeocoderTimedOut, Exception):
+        # replace with a dropdown
+        st.warning(
+            'The geo-locater service is not currently available. Try to select a '
+            'location form the dropdown or try refreshing the page in a few minutes.'
+        )
+        loc_dropdown_info = get_location_dropdown()
+        loc_name = st.selectbox(
+            'Select your location',
+            options=list(loc_dropdown_info.keys()),
+            index=0
+        )
+        weather_file = __here__.joinpath('epw', f'{loc_dropdown_info[loc_name]}.epw')
+        epw = EPW(weather_file)
+        location = epw.location
+    else:
+        if not location:
+            st.error(f'We could not find any information for {city}. Check the location and try again.')
+            st.stop()
     lat = location.latitude
     lon = location.longitude
 
     user_location = Point2D(lat, lon)
-    __here__ = pathlib.Path(__file__).parent
     location_data = load_location_data(__here__.joinpath('epw'))
 
     closet_location = sorted(location_data, key=lambda x:get_distance(x['location'], user_location))[0]
